@@ -1,5 +1,6 @@
 <?php
 
+use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,5 +23,15 @@ Route::view('dashboard', 'dashboard')
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
+
+
+    
+Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
+
+    Volt::route('courses', 'admin.courses')
+        ->middleware(['role:superadministrator|admin|pengajar'])
+        ->name('courses.index');
+
+});
 
 require __DIR__.'/auth.php';
