@@ -59,4 +59,14 @@ class User extends Authenticatable implements LaratrustUser
     {
         return $this->belongsToMany(Course::class, 'course_student', 'user_id', 'course_id');
     }
+
+    public function pengajar()
+    {
+        return $this->hasOne(Pengajar::class, 'user_id');
+    }
+
+    public function siswa()
+    {
+        return $this->hasOne(Siswa::class, 'user_id');
+    }
 }

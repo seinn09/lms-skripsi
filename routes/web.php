@@ -35,6 +35,18 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Volt::route('courses/create', 'admin.coursecreate') 
         ->middleware(['permission:courses-create']) 
         ->name('courses.create');
+
+    Volt::route('pengguna', 'admin.pengguna')
+        ->middleware(['permission:users-read'])
+        ->name('pengguna.index');
+
+    Volt::route('pengguna/create', 'admin.penggunacreate')
+        ->middleware(['permission:users-create'])
+        ->name('pengguna.create');
+
+    Volt::route('pengguna/{user}/edit', 'admin.penggunaedit')
+        ->middleware(['permission:users-update'])
+        ->name('pengguna.edit');
 });
 
 require __DIR__.'/auth.php';

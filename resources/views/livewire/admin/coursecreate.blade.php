@@ -12,11 +12,13 @@ use function Livewire\Volt\on;
 
 new class extends Component
 {
-
+    #[Rule('required|min:3')]
     public string $name = '';
 
+    #[Rule('required|min:10')]
     public string $description = '';
 
+    #[Rule('required|exists:users,id')]
     public int $user_id;
 
     public Collection $pengajars;
@@ -25,7 +27,7 @@ new class extends Component
     {
         $this->pengajars = User::whereHas('roles', function ($query) {
             $query->where('name', 'pengajar');
-        })->get();
+        })->orderBy('created_at', 'asc')->get();
 
         if (auth()->user()->hasRole('pengajar')) {
             $this->user_id = auth()->id();
@@ -39,6 +41,11 @@ new class extends Component
         $validated = $this->validate();
 
         Course::create($validated);
+
+        session()->flash('notify', [
+            'type' => 'success',
+            'message' => 'Data berhasil disimpan!'
+        ]);
 
         $this->redirectRoute('admin.courses.index', navigate: true);
     }

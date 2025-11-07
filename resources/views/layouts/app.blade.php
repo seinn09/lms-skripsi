@@ -48,6 +48,8 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
     <body class="font-sans antialiased">
         
@@ -92,6 +94,16 @@
                             Dashboard
                         </a>
                     </li>
+
+                    @permission('users-create')
+                        <li>
+                            <a href="{{ route('admin.pengguna.index') }}" wire:navigate 
+                            @class(['active' => request()->routeIs('admin.pengguna.index')])>
+                                Pengguna
+                            </a>
+                        </li>
+                    @endpermission
+
                     <li>
                         <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
                             Courses
@@ -120,5 +132,21 @@
                 </ul>
             </div>
         </div>
+
+        @if (session()->has('notify'))
+            <script>
+                document.addEventListener('livewire:navigated', () => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: '{{ session('notify')['type'] }}',
+                        title: '{{ session('notify')['message'] }}',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                    });
+                });
+            </script>
+        @endif
     </body>
 </html>
