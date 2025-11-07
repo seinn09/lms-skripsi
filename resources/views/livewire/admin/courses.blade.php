@@ -26,9 +26,18 @@ new class extends Component
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    
-                    <h1 class="text-xl font-bold mb-4">Daftar Mata Kuliah</h1>
 
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-xl font-bold">Daftar Mata Kuliah</h1>
+
+                        @permission('courses-create')
+                            <a href="{{ route('admin.courses.create') }}" wire:navigate 
+                               class="btn btn-primary btn-sm text-white">
+                                + Tambah Course Baru
+                            </a>
+                        @endpermission
+                    </div>
+                    
                     <ul>
                         @forelse ($courses as $course)
                             <li class="mb-2 p-2 border rounded">

@@ -32,6 +32,9 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->middleware(['role:superadministrator|admin|pengajar'])
         ->name('courses.index');
 
+    Volt::route('courses/create', 'admin.coursecreate') 
+        ->middleware(['permission:courses-create']) 
+        ->name('courses.create');
 });
 
 require __DIR__.'/auth.php';
