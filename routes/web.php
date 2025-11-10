@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Permission;
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Route;
 
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
+Volt::route('dashboard', 'dashboard.index')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -24,7 +25,10 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-
+#ROUTE COURSE MATERIALS
+Volt::route('courses/{course}/materials', 'course-materials')
+    ->middleware(['permission:materials-read', 'auth', 'verified'])
+    ->name('courses.materials.index');
     
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
 
