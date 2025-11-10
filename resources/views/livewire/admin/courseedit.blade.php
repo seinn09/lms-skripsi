@@ -102,15 +102,15 @@ new class extends Component
                             @error('user_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             
                             <div class="mt-6 flex gap-3">
-                            <button type="submit" class="btn bg-blue-500 px-4 font-bold
-                                text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
-                                Simpan
-                            </button>
-                            <a href="{{ route('admin.courses.index') }}" wire:navigate 
-                                class="btn btn-ghost bg-gray-200 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
-                                Batal
-                            </a>
-                        </div>
+                                <button type="submit" class="btn bg-blue-500 px-4 font-bold
+                                    text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
+                                    Simpan
+                                </button>
+                                <a href="{{ route('admin.courses.index') }}" wire:navigate 
+                                    class="btn btn-ghost bg-gray-200 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
+                                    Batal
+                                </a>
+                            </div>
 
                         </fieldset>
                     </form>

@@ -27,8 +27,16 @@ Route::view('profile', 'profile')
 
 #ROUTE COURSE MATERIALS
 Volt::route('courses/{course}/materials', 'course-materials')
-    ->middleware(['permission:materials-read', 'auth', 'verified'])
+    ->middleware(['permission:weeks-read', 'auth', 'verified'])
     ->name('courses.materials.index');
+
+Volt::route('courses/{course}/week/{week}', 'week-details')
+    ->middleware(['permission:weeks-read', 'auth', 'verified'])
+    ->name('courses.materials.show');
+
+Volt::route('courses/week/{week}/edit', 'week-edit')
+    ->middleware(['auth', 'verified', 'permission:weeks-update'])
+    ->name('courses.materials.edit');
     
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
 
