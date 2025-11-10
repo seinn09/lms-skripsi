@@ -28,6 +28,7 @@ Route::view('profile', 'profile')
     
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
 
+    #ROUTE MANAGE COURSES
     Volt::route('courses', 'admin.courses')
         ->middleware(['role:superadministrator|admin|pengajar'])
         ->name('courses.index');
@@ -36,6 +37,11 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->middleware(['permission:courses-create']) 
         ->name('courses.create');
 
+    Volt::route('courses/{course}/edit', 'admin.courseedit')
+        ->middleware(['permission:courses-update'])
+        ->name('courses.edit');
+
+    #ROUTE MANAGE PENGGUNA
     Volt::route('pengguna', 'admin.pengguna')
         ->middleware(['permission:users-read'])
         ->name('pengguna.index');

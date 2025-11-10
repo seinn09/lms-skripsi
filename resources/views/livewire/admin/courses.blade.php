@@ -8,9 +8,56 @@ new class extends Component
 {
     public Collection $courses;
 
+    public ?int $idToDelete = null;
+
     public function mount(): void
     {
-        $this->courses = Course::all();
+        $this->courses = Course::with('pengajar')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+    }
+
+    public function confirmDeleteCourse(int $id): void
+    {
+        $this->idToDelete = $id;
+
+        $this->js("
+            Swal.fire({
+                title: 'Anda akan menghapus data ini!',
+                text: 'Data mata kuliah yang dihapus tidak dapat dikembalikan!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Panggil method 'destroy' di backend
+                    \$wire.destroy();
+                }
+            })
+        ");
+    }
+
+    public function destroy(): void
+    {
+        if ($this->idToDelete === null) {
+            return;
+        }
+
+        Course::destroy($this->idToDelete);
+
+        $this->idToDelete = null;
+
+        session()->flash('notify', [
+            'type' => 'success',
+            'message' => 'Mata kuliah berhasil dihapus!'
+        ]);
+
+        $this->courses = Course::with('pengajar')
+                            ->orderBy('created_at', 'desc')
+                            ->get();
     }
 
 }; ?>
@@ -37,18 +84,48 @@ new class extends Component
                             </a>
                         @endpermission
                     </div>
-                    
-                    <ul>
-                        @forelse ($courses as $course)
-                            <li class="mb-2 p-2 border rounded">
-                                {{ $course->name }}
-                            </li>
-                        @empty
-                            <li>
-                                <p>Belum ada data mata kuliah.</p>
-                            </li>
-                        @endforelse
-                    </ul>
+
+                    <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 p-4">
+                        <table class="table">
+                            <thead>
+                                <tr class="border bg-base-200 rounded-xl">
+                                    <th>Nama Mata Kuliah</th>
+                                    <th>Deskripsi</th>
+                                    <th>Dosen Pengampu</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($courses as $course)
+                                    <tr class="hover:bg-base-300">
+                                        <td>{{ $course->name }}</td>
+                                        <td>{{ \Illuminate\Support\Str::limit($course->description, 50) }}</td>
+                                        <td>
+                                            {{ $course->pengajar->name ?? 'N/A' }}
+                                        </td>
+                                        <td class="flex gap-2">
+                                            @permission('courses-update')
+                                                <a href="{{ route('admin.courses.edit', $course) }}" wire:navigate 
+                                                    class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
+                                                    transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">
+                                                    Edit
+                                                </a>
+                                            @endpermission
+                                            @permission('courses-delete')
+                                                <button class="py-2 px-4 text-base rounded-md bg-red-600 text-black
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-700"
+                                                wire:click="confirmDeleteCourse({{ $course->id }})">Delete</button>
+                                            @endpermission
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center font-bold">Belum ada data mata kuliah.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
                 </div>
             </div>
