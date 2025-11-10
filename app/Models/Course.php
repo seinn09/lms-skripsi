@@ -33,8 +33,8 @@ class Course extends Model
         return $this->belongsToMany(User::class, 'course_student', 'course_id', 'user_id');
     }
 
-    public function materials(): HasMany
+    public function weeks(): HasMany
     {
-        return $this->hasMany(Material::class, 'course_id');
+        return $this->hasMany(Week::class, 'course_id');
     }
 }

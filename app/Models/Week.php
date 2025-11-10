@@ -5,27 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Material extends Model
+class Week extends Model
 {
     use HasFactory;
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
-        'week_id',
+        'course_id',
+        'week_number',
         'title',
-        'file_path',
-        'external_link',
+        'description',
     ];
 
-    public function week(): BelongsTo
+    public function course(): BelongsTo
     {
-        return $this->belongsTo(Week::class, 'week_id');
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(Material::class, 'week_id');
     }
 }

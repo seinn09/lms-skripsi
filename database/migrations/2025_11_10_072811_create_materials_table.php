@@ -13,6 +13,17 @@ return new class extends Migration
     {
         Schema::create('materials', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('week_id')
+                  ->constrained('weeks')
+                  ->onDelete('cascade');
+
+            $table->string('title');
+            
+            // Kolom-kolom dari ERD Anda
+            $table->string('file_path')->nullable()->comment('Upload file (PPT, PDF)');
+            $table->string('external_link')->nullable()->comment('Link GDrive, YouTube, dll');
+            
             $table->timestamps();
         });
     }

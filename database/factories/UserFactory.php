@@ -4,6 +4,8 @@ namespace Database\Factories;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Siswa;
+use App\Models\Pengajar;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -56,6 +58,47 @@ class UserFactory extends Factory
             );
 
             $user->addRole($superAdminRole);
+            $user->update(['label' => 'superadministrator']);
+        });
+    }
+
+    public function admin(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $role = Role::firstOrCreate(['name' => 'admin'], [
+                'display_name' => 'Administrator',
+                'description' => 'admin sistem (tidak memiliki akses manajemen penuh seperti superadministrator)'
+            ]);
+            $user->addRole($role);
+            $user->update(['label' => 'admin']);
+        });
+    }
+
+    public function pengajar(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $role = Role::firstOrCreate(['name' => 'pengajar'], [
+                'display_name' => 'Pengajar',
+                'description' => 'Pengajar atau dosen yang mengelola pelajaran'
+            ]);
+            $user->addRole($role);
+            $user->update(['label' => 'pengajar']);
+
+            Pengajar::create(['user_id' => $user->id]);
+        });
+    }
+
+    public function siswa(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $role = Role::firstOrCreate(['name' => 'siswa'], [
+                'display_name' => 'Siswa',
+                'description' => 'Siswa atau mahasiswa yang mengikuti pelajaran'
+            ]);
+            $user->addRole($role);
+            $user->update(['label' => 'siswa']);
+
+            Siswa::create(['user_id' => $user->id]);
         });
     }
 }
