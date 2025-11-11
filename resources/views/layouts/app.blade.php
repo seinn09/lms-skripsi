@@ -104,11 +104,13 @@
                         </li>
                     @endpermission
 
-                    <li>
-                        <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
-                            Courses
-                        </a>
-                    </li>
+                    @role('superadministrator|admin')
+                        <li>
+                            <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
+                                Courses
+                            </a>
+                        </li>
+                    @endrole
 
                     <div class="flex-grow"></div>
                     

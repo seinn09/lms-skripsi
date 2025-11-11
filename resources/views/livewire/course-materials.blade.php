@@ -2,7 +2,7 @@
 
 use Livewire\Volt\Component;
 use App\Models\Course;
-use App\Models\Week; // <-- Kita ganti dari Material ke Week
+use App\Models\Week;
 use Illuminate\Database\Eloquent\Collection;
 
 new class extends Component
