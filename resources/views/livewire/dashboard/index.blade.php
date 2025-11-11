@@ -3,15 +3,22 @@ use Livewire\Volt\Component;
 use App\Models\Course;
 use Illuminate\Database\Eloquent\Collection;
 use function Livewire\Volt\layout;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
     public Collection $courses;
+    public ?int $courseToDrop = null;
 
     public function mount(): void
     {
-        if (auth()->check()) {
-            $user = auth()->user(); 
+        $this->loadCourses();
+    }
+    
+    public function loadCourses(): void
+    {
+        if (Auth::check()) {
+            $user = Auth::user(); 
             
             if ($user->hasRole(['superadministrator', 'admin'])) {
                 $this->courses = Course::with('pengajar')->orderBy('name', 'asc')->get();
@@ -23,13 +30,53 @@ new class extends Component
                 $this->courses = $user->coursesAsSiswa()->with('pengajar')->orderBy('name', 'asc')->get();
             } 
             else {
-                $this->courses = collect();
+                $this->courses = new \Illuminate\Database\Eloquent\Collection();
             }
-
         } else {
             $this->courses = new \Illuminate\Database\Eloquent\Collection();
             layout('components.layouts.guest'); 
         }
+    }
+
+    public function confirmUnenroll(int $courseId): void
+    {
+        $this->courseToDrop = $courseId;
+
+        $this->js("
+            Swal.fire({
+                title: 'Batalkan Mata Kuliah?',
+                text: 'Anda akan keluar dari mata kuliah ini.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Batalkan!',
+                cancelButtonText: 'Tidak'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Panggil method 'dropCourse' di backend
+                    \$wire.dropCourse();
+                }
+            })
+        ");
+    }
+
+    public function dropCourse(): void
+    {
+        if ($this->courseToDrop === null) {
+            return;
+        }
+
+        Auth::user()->coursesAsSiswa()->detach($this->courseToDrop);
+
+        $this->courseToDrop = null;
+
+        session()->flash('notify', [
+            'type' => 'success',
+            'message' => 'Anda berhasil batal mengambil mata kuliah.'
+        ]);
+
+        $this->loadCourses();
     }
 }; ?>
 
@@ -81,11 +128,20 @@ new class extends Component
                                 </p>
                                 
                                 <div class="card-actions justify-end">
+                                    @role('siswa')
+                                        <button class="btn px-2 py-2 text-black bg-red-400
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500"
+                                                wire:click="confirmUnenroll({{ $course->id }})">
+                                            Batalkan
+                                        </button>
+                                    @endrole
+
                                     <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
-                                    class="btn btn-sm text-black bg-white
+                                    class="btn px-2 py-2 text-black bg-white
                                     transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
                                         Lihat Materi
                                     </a>
+
                                 </div>
                             </div>
                         </div>

@@ -44,6 +44,11 @@ Volt::route('courses/week/{week}/materials/create', 'material-create')
 Volt::route('materials/{material}/edit', 'material-edit')
     ->middleware(['auth', 'verified', 'permission:materials-update'])
     ->name('materials.edit');
+
+
+Volt::route('enroll-courses', 'course-enroll')
+    ->middleware(['auth', 'verified', 'role:siswa|administrator|admin'])
+    ->name('courses.enroll.index');
     
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
 
@@ -72,6 +77,12 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Volt::route('pengguna/{user}/edit', 'admin.penggunaedit')
         ->middleware(['permission:users-update'])
         ->name('pengguna.edit');
+
+    #ROUTE UNTUK ENROLL
+    Volt::route('enrollment', 'admin.enrollment')
+        ->middleware(['permission:manage_enrollment_status-create']) 
+        ->name('enrollment.index');
+
 });
 
 require __DIR__.'/auth.php';

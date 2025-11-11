@@ -22,6 +22,7 @@ return [
             'materials' => 'c,r,u,d', 
             'course_student' => 'c,r,u,d',
             'weeks' => 'c,r,u,d',
+            'manage_enrollment_status' => 'c,r,u,d',
         ],
         
         'admin' => [
@@ -30,6 +31,7 @@ return [
             'materials' => 'c,r,u,d', 
             'course_student' => 'c,r,u,d',
             'weeks' => 'c,r,u,d',
+            'manage_enrollment_status' => 'c,r,u,d',
         ],
         
         'pengajar' => [

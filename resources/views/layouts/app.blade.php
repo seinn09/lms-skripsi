@@ -104,10 +104,28 @@
                         </li>
                     @endpermission
 
+                    @permission('manage_enrollment_status-create')
+                        <li>
+                            <a href="{{ route('admin.enrollment.index') }}" wire:navigate 
+                            @class(['active' => request()->routeIs('admin.enrollment.index')])>
+                                Kelola Pendaftaran
+                            </a>
+                        </li>
+                    @endpermission
+
                     @role('superadministrator|admin')
                         <li>
                             <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
                                 Courses
+                            </a>
+                        </li>
+                    @endrole
+
+                    @role('siswa')
+                        <li>
+                            <a href="{{ route('courses.enroll.index') }}" wire:navigate 
+                            @class(['active' => request()->routeIs('courses.enroll.index')])>
+                                Ambil Mata Kuliah
                             </a>
                         </li>
                     @endrole

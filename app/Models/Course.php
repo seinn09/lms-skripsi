@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Course extends Model
 {
@@ -36,5 +37,10 @@ class Course extends Model
     public function weeks(): HasMany
     {
         return $this->hasMany(Week::class, 'course_id');
+    }
+
+    public function enrollable(): HasOne
+    {
+        return $this->hasOne(EnrollableCourse::class, 'course_id');
     }
 }

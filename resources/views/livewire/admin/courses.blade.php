@@ -104,6 +104,15 @@ new class extends Component
                                             {{ $course->pengajar->name ?? 'N/A' }}
                                         </td>
                                         <td class="flex gap-2">
+                                            @permission('courses-read')
+                                                <div class="card-actions justify-end">
+                                                    <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
+                                                    class="py-2 px-4 text-base rounded-md text-black bg-blue-400
+                                                    transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-500">
+                                                        Lihat Materi
+                                                    </a>
+                                                </div>
+                                            @endpermission
                                             @permission('courses-update')
                                                 <a href="{{ route('admin.courses.edit', $course) }}" wire:navigate 
                                                     class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
