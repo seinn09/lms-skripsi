@@ -1,51 +1,54 @@
 <?php
 use Livewire\Volt\Component;
 use App\Models\Course;
+use App\Models\CourseClass;
 use Illuminate\Database\Eloquent\Collection;
 use function Livewire\Volt\layout;
 use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
-    public Collection $courses;
-    public ?int $courseToDrop = null;
+    public Collection $myClasses;
+    public ?int $classToDrop = null;
 
     public function mount(): void
     {
-        $this->loadCourses();
+        $this->loadClasses();
     }
     
-    public function loadCourses(): void
+    public function loadClasses(): void
     {
         if (Auth::check()) {
             $user = Auth::user(); 
             
-            if ($user->hasRole(['superadministrator', 'admin'])) {
-                $this->courses = Course::with('pengajar')->orderBy('name', 'asc')->get();
-            } 
-            elseif ($user->hasRole('pengajar')) {
-                $this->courses = $user->coursesAsPengajar()->with('pengajar')->orderBy('name', 'asc')->get();
+            if ($user->hasRole('pengajar')) {
+                $this->myClasses = $user->taughtClasses()
+                                    ->with(['course', 'course.owner'])
+                                    ->get();
             } 
             elseif ($user->hasRole('siswa')) {
-                $this->courses = $user->coursesAsSiswa()->with('pengajar')->orderBy('name', 'asc')->get();
+                $this->myClasses = $user->enrolledClasses()
+                                    ->with(['course', 'course.owner'])
+                                    ->get();
             } 
             else {
-                $this->courses = new \Illuminate\Database\Eloquent\Collection();
+                $this->myClasses = new \Illuminate\Database\Eloquent\Collection();
             }
+
         } else {
-            $this->courses = new \Illuminate\Database\Eloquent\Collection();
+            $this->myClasses = new \Illuminate\Database\Eloquent\Collection();
             layout('components.layouts.guest'); 
         }
     }
 
-    public function confirmUnenroll(int $courseId): void
+    public function confirmUnenroll(int $classId): void
     {
-        $this->courseToDrop = $courseId;
+        $this->classToDrop = $classId;
 
         $this->js("
             Swal.fire({
                 title: 'Batalkan Mata Kuliah?',
-                text: 'Anda akan keluar dari mata kuliah ini.',
+                text: 'Anda akan keluar dari kelas ini.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -54,29 +57,27 @@ new class extends Component
                 cancelButtonText: 'Tidak'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Panggil method 'dropCourse' di backend
-                    \$wire.dropCourse();
+                    \$wire.dropClass();
                 }
             })
         ");
     }
 
-    public function dropCourse(): void
+    public function dropClass(): void
     {
-        if ($this->courseToDrop === null) {
+        if ($this->classToDrop === null) {
             return;
         }
 
-        Auth::user()->coursesAsSiswa()->detach($this->courseToDrop);
-
-        $this->courseToDrop = null;
+        Auth::user()->enrolledClasses()->detach($this->classToDrop);
+        $this->classToDrop = null;
 
         session()->flash('notify', [
             'type' => 'success',
             'message' => 'Anda berhasil batal mengambil mata kuliah.'
         ]);
 
-        $this->loadCourses();
+        $this->loadClasses();
     }
 }; ?>
 
@@ -100,7 +101,7 @@ new class extends Component
         </div>
     </div>
 
-    @auth
+    {{-- @auth
         <x-slot name="header">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Dashboard Mata Kuliah') }}
@@ -154,6 +155,76 @@ new class extends Component
             </div>
         </div>
 
+    @else
+        <x-slot name="header">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Dashboard') }}
+            </h2>
+        </x-slot>
+    @endauth --}}
+
+    @auth
+        <x-slot name="header">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Dashboard Mata Kuliah') }}
+            </h2>
+        </x-slot>
+
+        <div id="class-section" class="py-12">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    @forelse ($myClasses as $class)
+                        <div class="card bg-primary text-primary-content shadow-xl w-full group transition-all duration-300">
+                            <div class="card-body">
+                                <h1 class="card-title font-bold text-3xl">{{ $class->course->name }}</h1>
+                                
+                                <span class="badge badge-ghost badge-sm mb-2 w-fit">{{ $class->class_code }}</span>
+
+                                
+                               @role('superadministrator|admin|siswa')
+                                    <p class="text-sm text-white mb-2">Dosen Pengampu: {{ $class->pengajar->name ?? 'N/A' }}</p>
+                                @endrole
+                                
+                                <p class="line-clamp-2 group-hover:line-clamp-none">
+                                    {{ $class->course->description }}
+                                </p>
+                                
+                                <div class="card-actions justify-end">
+                                    <a href="{{ route('courses.materials.index', $class->course) }}" wire:navigate 
+                                       class="btn btn-sm text-black bg-white
+                                       transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
+                                        Lihat Materi
+                                    </a>
+
+                                    @role('siswa')
+                                        <button class="btn px-2 py-2 text-black bg-red-400
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500"
+                                                wire:click="confirmUnenroll({{ $class->id }})">
+                                            Batalkan
+                                        </button>
+                                    @endrole
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full p-6 bg-white shadow-sm sm:rounded-lg text-center">
+                            @role('superadministrator|admin')
+                                <p class="font-bold">Dashboard Anda kosong.</p>
+                                <p class="text-sm text-gray-600">Gunakan menu navigasi di samping untuk mengelola data.</p>
+                            @else
+                                <p class="font-bold">Anda belum terdaftar di kelas manapun.</p>
+                                @role('siswa')
+                                    <a href="{{ route('courses.enroll.index') }}" wire:navigate class="link link-primary">Ambil Mata Kuliah Sekarang</a>
+                                @endrole
+                            @endrole
+                        </div>
+                    @endforelse
+                </div> 
+
+            </div>
+        </div>
     @else
         <x-slot name="header">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">

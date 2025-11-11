@@ -18,13 +18,13 @@ return new class extends Migration
                   ->constrained('users')
                   ->onDelete('cascade');
 
-            $table->foreignId('course_id')
-                  ->constrained('courses')
+            $table->foreignId('course_class_id')
+                  ->constrained('course_classes')
                   ->onDelete('cascade');
             
             $table->timestamps();
 
-            $table->unique(['user_id', 'course_id']);
+            $table->unique(['user_id', 'course_class_id']);
         });
     }
 

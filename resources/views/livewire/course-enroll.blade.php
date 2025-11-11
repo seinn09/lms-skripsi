@@ -1,40 +1,40 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\EnrollableCourse;
+use App\Models\CourseClass;
 use App\Models\Course;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
-    public Collection $availableCourses;
-    public ?int $courseToEnroll = null;
+    public Collection $availableClasses;
+    public ?int $classToEnroll = null;
 
     public function mount(): void
     {
-        $this->loadCourses();
+        $this->loadClasses();
     }
 
-    public function loadCourses(): void
+    public function loadClasses(): void
     {
-        $enrolledCourseIds = Auth::user()->coursesAsSiswa()
-                                ->pluck('courses.id');
+        $enrolledClassIds = Auth::user()->enrolledClasses()
+                                ->pluck('course_classes.id');
 
-        $this->availableCourses = EnrollableCourse::with(['course', 'course.pengajar'])
+        $this->availableClasses = CourseClass::with(['course', 'pengajar'])
             ->where('status', 'open')
-            ->whereNotIn('course_id', $enrolledCourseIds)
+            ->whereNotIn('id', $enrolledClassIds)
             ->get();
     }
 
-    public function enroll(int $courseId): void
+    public function confirmEnroll(int $classId): void
     {
-        $this->courseToEnroll = $courseId;
-
+        $this->classToEnroll = $classId;
+        
         $this->js("
             Swal.fire({
-                title: 'Ambil Mata Kuliah Ini?',
-                text: 'Anda akan mendaftar di mata kuliah ini.',
+                title: 'Ambil Kelas Ini?',
+                text: 'Anda akan mendaftar di kelas ini.',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -52,20 +52,20 @@ new class extends Component
 
     public function doEnroll(): void
     {
-        if ($this->courseToEnroll === null) {
+        if ($this->classToEnroll === null) {
             return;
         }
 
-        Auth::user()->coursesAsSiswa()->attach($this->courseToEnroll);
+        Auth::user()->enrolledClasses()->attach($this->classToEnroll);
 
         session()->flash('notify', [
             'type' => 'success',
-            'message' => 'Anda berhasil mendaftar di mata kuliah ini!'
+            'message' => 'Anda berhasil mendaftar di kelas ini!'
         ]);
 
-        $this->loadCourses();
+        $this->loadClasses();
 
-        $this->courseToEnroll = null;
+        $this->classToEnroll = null;
     }
 
 }; ?>
@@ -86,24 +86,26 @@ new class extends Component
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                @forelse ($availableCourses as $enrollable)
+                @forelse ($availableClasses as $class)
                     <div class="card bg-primary text-primary-content shadow-xl w-full 
                                     group transition-all duration-500">
                         <div class="card-body">
-                            <h2 class="card-title font-bold text-xl">{{ $enrollable->course->name }}</h2>
+                            <h2 class="card-title font-bold text-xl">{{ $class->course->name}}</h2>
+                            <span class="badge badge-ghost badge-sm mb-2 w-fit">{{ $class->class_code }}</span>
+
                             <p class="text-sm text-white mb-2">
-                                Dosen Pengampu: {{ $enrollable->course->pengajar->name ?? 'N/A' }}
+                                Dosen Pengampu: {{ $class->pengajar->name ?? 'N/A' }}
                             </p>
                            
                             <p class="line-clamp-2 group-hover:line-clamp-none">
-                                    {{ $enrollable->course->description }}
+                                    {{ $class->course->description }}
                             </p>
                             
                             <div class="card-actions justify-end">
                                 <button class="btn px-2 py-2 text-black bg-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300"
-                                        wire:click="enroll({{ $enrollable->course_id }})"
+                                        wire:click="confirmEnroll({{ $class->id }})"
                                         wire:loading.attr="disabled"
-                                        wire:target="enroll({{ $enrollable->course_id }})">
+                                        wire:target="confirmEnroll({{ $class->id }})">
                                     Ambil Mata Kuliah
                                 </button>
                             </div>

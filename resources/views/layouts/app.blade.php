@@ -104,6 +104,15 @@
                         </li>
                     @endpermission
 
+                    @role('superadministrator|admin')
+                        <li>
+                            <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
+                                Mata Kuliah
+                            </a>
+                        </li>
+                    @endrole
+
+
                     @permission('manage_enrollment_status-create')
                         <li>
                             <a href="{{ route('admin.enrollment.index') }}" wire:navigate 
@@ -113,15 +122,7 @@
                         </li>
                     @endpermission
 
-                    @role('superadministrator|admin')
-                        <li>
-                            <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
-                                Courses
-                            </a>
-                        </li>
-                    @endrole
-
-                    @role('siswa')
+                    @role('superadministrator|admin|siswa')
                         <li>
                             <a href="{{ route('courses.enroll.index') }}" wire:navigate 
                             @class(['active' => request()->routeIs('courses.enroll.index')])>

@@ -12,7 +12,7 @@ new class extends Component
 
     public function mount(): void
     {
-        $this->courses = Course::with('pengajar')
+        $this->courses = Course::with('owner')
                             ->orderBy('created_at', 'desc')
                             ->get();
     }
@@ -24,7 +24,7 @@ new class extends Component
         $this->js("
             Swal.fire({
                 title: 'Anda akan menghapus data ini!',
-                text: 'Data mata kuliah yang dihapus tidak dapat dikembalikan!',
+                text: 'Menghapus mata kuliah akan menghapus SEMUA kelas dan materi di dalamnya!',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -33,7 +33,6 @@ new class extends Component
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Panggil method 'destroy' di backend
                     \$wire.destroy();
                 }
             })
@@ -65,7 +64,7 @@ new class extends Component
 <div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Manajemen Courses') }}
+            {{ __('Manajemen Mata Kuliah (Katalog)') }}
         </h2>
     </x-slot>
 
@@ -89,22 +88,27 @@ new class extends Component
                         <table class="table">
                             <thead>
                                 <tr class="border bg-base-200 rounded-xl">
+                                    <th>Kode MK</th> 
                                     <th>Nama Mata Kuliah</th>
-                                    <th>Deskripsi</th>
-                                    <th>Dosen Pengampu</th>
+                                    <th>Dosen Pengampu</th> 
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($courses as $course)
                                     <tr class="hover:bg-base-300">
+                                        <td>
+                                            <span class="badge badge-info">{{ $course->course_code }}</span>
+                                        </td>
                                         <td>{{ $course->name }}</td>
-                                        <td>{{ \Illuminate\Support\Str::limit($course->description, 50) }}</td>
+                                        <td>
+                                            {{ $course->owner->name ?? 'N/A' }}
+                                        </td>
                                         <td>
                                             {{ $course->pengajar->name ?? 'N/A' }}
                                         </td>
                                         <td class="flex gap-2">
-                                            @permission('courses-read')
+                                            @permission('weeks-read')
                                                 <div class="card-actions justify-end">
                                                     <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
                                                     class="py-2 px-4 text-base rounded-md text-black bg-blue-400

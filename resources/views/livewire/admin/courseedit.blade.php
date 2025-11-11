@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 new class extends Component
 {
-    // Properti untuk menampung data
     public Course $course;
     public Collection $pengajars;
 
-    // Properti untuk form, diikat dengan wire:model
+    #[Rule('required|string|min:5')]
+    public string $course_code = '';
+
     #[Rule('required|string|min:3')]
     public string $name = '';
 
@@ -22,44 +23,41 @@ new class extends Component
     #[Rule('required|exists:users,id')]
     public int $user_id;
 
-    /**
-     * Mount dijalankan saat komponen dimuat.
-     * Kita 'pre-fill' (isi otomatis) form dengan data yang ada.
-     */
     public function mount(Course $course): void
     {
-        // 1. Muat course yang akan diedit
         $this->course = $course;
 
-        // 2. Isi properti form dari data course
+        $this->course_code = $course->course_code;
         $this->name = $course->name;
         $this->description = $course->description;
         $this->user_id = $course->user_id;
 
-        // 3. Ambil daftar pengajar untuk dropdown
         $this->pengajars = User::whereHas('roles', function ($query) {
             $query->where('name', 'pengajar');
         })->get();
     }
 
-    /**
-     * Method untuk menyimpan perubahan.
-     */
     public function save(): void
     {
-        // Jalankan validasi
-        $validated = $this->validate();
+        $validated = $this->validate([
+            'course_code' => [
+                'required',
+                'string',
+                'min:5',
+                ValidationRule::unique('courses')->ignore($this->course->id), 
+            ],
+            'name' => 'required|string|min:3',
+            'description' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-        // Update data di database
         $this->course->update($validated);
 
-        // Tampilkan notifikasi sukses
         session()->flash('notify', [
             'type' => 'success',
             'message' => 'Mata kuliah berhasil diperbarui!'
         ]);
 
-        // Redirect kembali ke halaman daftar courses
         $this->redirectRoute('admin.courses.index', navigate: true);
     }
 }; ?>
@@ -80,6 +78,12 @@ new class extends Component
                         
                         <fieldset class="fieldset bg-base-100 border-base-300 rounded-box w-full border p-4">
                             <legend class="fieldset-legend text-lg font-semibold">Detail Mata Kuliah</legend>
+
+                            <label class="label" for="course_code">Kode Mata Kuliah</label>
+                            <input id="course_code" type="text" class="input w-full border-black rounded-xl" 
+                                   placeholder="Cth: NINFUM6039" 
+                                   wire:model="course_code" />
+                            @error('course_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                             <label class="label" for="name">Nama Mata Kuliah</label>
                             <input id="name" type="text" class="input w-full border-black rounded-xl" 

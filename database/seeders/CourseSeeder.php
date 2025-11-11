@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
+use App\Models\Week;
+use App\Models\Course;
+use App\Models\CourseClass;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Course;
-use App\Models\User;
-use App\Models\Week;
 
 class CourseSeeder extends Seeder
 {
@@ -31,21 +32,25 @@ class CourseSeeder extends Seeder
         $coursesData = [
             [
                 'user_id' => $pengajar1->id,
+                'course_code' => 'NINFUM6039',
                 'name' => 'Pemograman Web Dasar',
                 'description' => 'Mempelajari dasar-dasar HTML, CSS, JavaScript, dan PHP.'
             ],
             [
                 'user_id' => $pengajar1->id,
+                'course_code' => 'NINFUM6040',
                 'name' => 'Matematika Komputer',
                 'description' => 'Konsep matematika diskrit untuk ilmu komputer.'
             ],
             [
                 'user_id' => $pengajar2->id,
+                'course_code' => 'NINFUM6041',
                 'name' => 'Organisasi dan Arsitektur Komputer',
                 'description' => 'Mempelajari arsitektur internal dan organisasi komputer.'
             ],
             [
                 'user_id' => $pengajar2->id,
+                'course_code' => 'NINFUM6042',
                 'name' => 'Game Programming',
                 'description' => 'Dasar-dasar pengembangan game menggunakan engine modern.'
             ],
@@ -55,9 +60,20 @@ class CourseSeeder extends Seeder
 
         foreach ($coursesData as $data) {
             
-            DB::transaction(function () use ($data) {
-                
+            DB::transaction(function () use ($data, $pengajar1, $pengajar2) {
+
                 $course = Course::create($data);
+
+                $pengajarKelas = ($course->user_id == $pengajar1->id) ? $pengajar1 : $pengajar2;
+                
+                CourseClass::create([
+                    'course_id' => $course->id,
+                    'user_id' => $pengajarKelas->id,
+                    'class_code' => $course->course_code . '-A',
+                    'semester' => 'Ganjil 2025/2026',
+                    'capacity' => 40,
+                    'status' => 'open',
+                ]);
 
                 for ($i = 1; $i <= 16; $i++) {
                     Week::create([
@@ -69,7 +85,6 @@ class CourseSeeder extends Seeder
                 }
             });
         }
-        
         $this->command->info('CourseSeeder selesai dijalankan.');
     }
 

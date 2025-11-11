@@ -12,6 +12,11 @@ use function Livewire\Volt\on;
 
 new class extends Component
 {
+    public Collection $pengajars;
+
+    #[Rule('required|string|min:5|unique:courses,course_code')]
+    public string $course_code = '';
+
     #[Rule('required|min:3')]
     public string $name = '';
 
@@ -21,17 +26,13 @@ new class extends Component
     #[Rule('required|exists:users,id')]
     public int $user_id;
 
-    public Collection $pengajars;
-
     public function mount(): void
     {
         $this->pengajars = User::whereHas('roles', function ($query) {
             $query->where('name', 'pengajar');
         })->orderBy('created_at', 'asc')->get();
 
-        if (auth()->user()->hasRole('pengajar')) {
-            $this->user_id = auth()->id();
-        } elseif ($this->pengajars->isNotEmpty()) {
+        if ($this->pengajars->isNotEmpty()) {
             $this->user_id = $this->pengajars->first()->id;
         }
     }
@@ -40,11 +41,23 @@ new class extends Component
     {
         $validated = $this->validate();
 
-        Course::create($validated);
+        DB::transaction(function () use ($validated) {
+            
+            $course = Course::create($validated);
+
+            for ($i = 1; $i <= 16; $i++) {
+                Week::create([
+                    'course_id' => $course->id,
+                    'week_number' => $i,
+                    'title' => "Pertemuan Ke-$i",
+                    'description' => "Materi untuk pertemuan minggu ke-$i akan diisi oleh dosen."
+                ]);
+            }
+        });
 
         session()->flash('notify', [
             'type' => 'success',
-            'message' => 'Data berhasil disimpan!'
+            'message' => 'Mata kuliah baru (dan 16 pertemuannya) berhasil dibuat!'
         ]);
 
         $this->redirectRoute('admin.courses.index', navigate: true);
@@ -54,7 +67,7 @@ new class extends Component
 <div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Tambah Course Baru') }}
+            {{ __('Tambah Mata Kuliah Baru') }}
         </h2>
     </x-slot>
 
@@ -68,6 +81,12 @@ new class extends Component
                         <fieldset class="fieldset bg-base-200 border-base-300 rounded-btn-primarybox w-full border p-4">
                             <legend class="fieldset-legend text-lg font-semibold">Detail Mata Kuliah</legend>
 
+                            <label class="label" for="course_code">Kode Mata Kuliah</label>
+                            <input id="course_code" type="text" class="input w-full border-black rounded-xl" 
+                                   placeholder="Cth: NINFUM6039" 
+                                   wire:model="course_code" />
+                            @error('course_code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
                             <label class="label" for="name">Nama Mata Kuliah</label>
                             <input id="name" type="text" class="input w-full border-black rounded-xl" 
                                    placeholder="Contoh: Pemrograman Web Lanjut" 
@@ -80,7 +99,7 @@ new class extends Component
                                       wire:model="description"></textarea>
                             @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
-                            <label class="label mt-4" for="user_id">Pengajar (Author)</label>
+                            <label class="label mt-4" for="user_id">Dosen Pengampu</label>
                             <select id="user_id" class="select w-full border-black rounded-xl" wire:model="user_id">
                                 @foreach ($pengajars as $pengajar)
                                     <option value="{{ $pengajar->id }}">{{ $pengajar->name }}</option>

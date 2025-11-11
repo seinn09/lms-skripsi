@@ -19,19 +19,15 @@ class Course extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'course_code',
         'name',
         'description',
         'user_id',
     ];
 
-    public function pengajar(): BelongsTo
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function siswa(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'course_student', 'course_id', 'user_id');
     }
 
     public function weeks(): HasMany
@@ -39,8 +35,9 @@ class Course extends Model
         return $this->hasMany(Week::class, 'course_id');
     }
 
-    public function enrollable(): HasOne
+    public function courseClasses(): HasMany
     {
-        return $this->hasOne(EnrollableCourse::class, 'course_id');
+        return $this->hasMany(CourseClass::class, 'course_id');
     }
+
 }

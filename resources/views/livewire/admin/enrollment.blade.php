@@ -1,50 +1,53 @@
 <?php
 
 use Livewire\Volt\Component;
-use App\Models\Course;
-use App\Models\EnrollableCourse;
+use App\Models\CourseClass;
 use Illuminate\Database\Eloquent\Collection;
 
 new class extends Component
 {
-    public Collection $courses;
+    public Collection $classes;
 
     public function mount(): void
     {
-        $this->loadCourses();
+        $this->loadClasses();
     }
 
-    public function loadCourses(): void
+    public function loadClasses(): void
     {
-        $this->courses = Course::with(['enrollable', 'pengajar'])
-                            ->orderBy('name', 'asc')
+        $this->classes = CourseClass::with(['course', 'pengajar'])
+                            ->orderBy('created_at', 'asc')
                             ->get();
     }
 
-    public function openEnrollment(int $courseId): void
+    public function openEnrollment(int $classId): void
     {
-        EnrollableCourse::create([
-            'course_id' => $courseId,
-        ]);
+        $class = CourseClass::find($classId);
+        if ($class) {
+            $class->update(['status' => 'open']);
+        }
 
         session()->flash('notify', [
             'type' => 'success',
-            'message' => 'Pendaftaran mata kuliah berhasil dibuka!'
+            'message' => 'Pendaftaran kelas berhasil dibuka!'
         ]);
 
-        $this->loadCourses();
+        $this->loadClasses();
     }
 
-    public function closeEnrollment(int $courseId): void
+    public function closeEnrollment(int $classId): void
     {
-        EnrollableCourse::where('course_id', $courseId)->delete();
+        $class = CourseClass::find($classId);
+        if ($class) {
+            $class->update(['status' => 'closed']);
+        }
 
         session()->flash('notify', [
             'type' => 'warning',
-            'message' => 'Pendaftaran mata kuliah telah ditutup.'
+            'message' => 'Pendaftaran kelas telah ditutup.'
         ]);
 
-        $this->loadCourses();
+        $this->loadClasses();
     }
 
 }; ?>
@@ -67,19 +70,25 @@ new class extends Component
                         <table class="table">
                             <thead>
                                 <tr class="border bg-base-200 rounded-xl">
-                                    <th>Nama Mata Kuliah</th>
+                                    <th>Mata Kuliah</th>
+                                    <th>Kode Kelas</th>
                                     <th>Dosen Pengampu</th>
-                                    <th>Status Pendaftaran</th>
+                                    <th>Semester</th>
+                                    <th>Kapasitas</th>
+                                    <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($courses as $course)
+                                @forelse ($classes as $class)
                                     <tr class="hover:bg-base-300">
-                                        <td>{{ $course->name }}</td>
-                                        <td>{{ $course->pengajar->name ?? 'N/A' }}</td>
+                                        <td>{{ $class->course->name ?? 'N/A' }}</td>
+                                        <td><span class="badge badge-ghost">{{ $class->class_code }}</span></td>
+                                        <td>{{ $class->pengajar->name ?? 'N/A' }}</td>
+                                        <td>{{ $class->semester }}</td>
+                                        <td>{{ $class->capacity }}</td>
                                         <td>
-                                            @if ($course->enrollable)
+                                            @if ($class->status == 'open')
                                                 <span class="badge badge-success">Dibuka</span>
                                             @else
                                                 <span class="badge badge-error">Ditutup</span>
@@ -87,13 +96,13 @@ new class extends Component
                                         </td>
                                         
                                         <td class="flex gap-2">
-                                            @if ($course->enrollable)
-                                                 <button type="submit" wire:click="closeEnrollment({{ $course->id }})" class="btn bg-red-400 px-4 font-bold
+                                            @if ($class->status == 'open')
+                                                 <button type="submit" wire:click="closeEnrollment({{ $class->id }})" class="btn bg-red-400 px-4 font-bold
                                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500">
                                                     Tutup Pendaftaran
                                                 </button>
                                             @else
-                                                <button type="submit" wire:click="openEnrollment({{ $course->id }})" class="btn bg-blue-500 px-4 font-bold
+                                                <button type="submit" wire:click="openEnrollment({{ $class->id }})" class="btn bg-blue-500 px-4 font-bold
                                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
                                                     Buka Pendaftaran
                                                 </button>

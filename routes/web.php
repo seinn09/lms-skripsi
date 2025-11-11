@@ -47,7 +47,7 @@ Volt::route('materials/{material}/edit', 'material-edit')
 
 
 Volt::route('enroll-courses', 'course-enroll')
-    ->middleware(['auth', 'verified', 'role:siswa|administrator|admin'])
+    ->middleware(['auth', 'verified', 'role:siswa|superadministrator|admin'])
     ->name('courses.enroll.index');
     
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
