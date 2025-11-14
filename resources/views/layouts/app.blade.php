@@ -104,9 +104,10 @@
                         </li>
                     @endpermission
 
-                    @role('superadministrator|admin')
+                    @role('superadministrator|admin|pengajar')
                         <li>
-                            <a href="{{ route('admin.courses.index') }}" wire:navigate @class(['active' => request()->routeIs('admin.courses.index')])>
+                            <a href="{{ route('courses.index') }}" wire:navigate 
+                                @class(['active' => request()->routeIs('courses.index')])>
                                 Mata Kuliah
                             </a>
                         </li>

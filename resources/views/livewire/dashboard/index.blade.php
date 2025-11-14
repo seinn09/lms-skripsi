@@ -91,7 +91,7 @@ new class extends Component
                     Lorem ipsum, dolor sit amet consectetur adipisicing elit. Quisquam quas cum velit. Labore voluptates, tenetur odio ipsa eum reiciendis cupiditate dolorem nam tempora facilis culpa porro minus atque eaque illum.
                 </p> 
                 @auth
-                    <a href="#course-section" class="btn btn-primary">
+                    <a href="#class-section" class="btn btn-primary">
                         Lihat Mata Kuliah!
                     </a>
                 @else
@@ -171,8 +171,10 @@ new class extends Component
         </x-slot>
 
         <div id="class-section" class="py-12">
+            <div class="flex w-full flex-col py-10">
+                <div class="card bg-gray-300 rounded-box grid h-20 place-items-center font-bold text-2xl">Mata Kuliah Anda</div>
+            </div>
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
                     @forelse ($myClasses as $class)
@@ -193,7 +195,7 @@ new class extends Component
                                 
                                 <div class="card-actions justify-end">
                                     <a href="{{ route('courses.materials.index', $class->course) }}" wire:navigate 
-                                       class="btn btn-sm text-black bg-white
+                                       class="btn px-2 py-2 text-black bg-white
                                        transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
                                         Lihat Materi
                                     </a>

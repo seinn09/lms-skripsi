@@ -12,9 +12,22 @@ new class extends Component
 
     public function mount(): void
     {
-        $this->courses = Course::with('owner')
-                            ->orderBy('created_at', 'desc')
-                            ->get();
+        $user = Auth::user();
+
+        if ($user->hasRole('superadministrator|admin')) {
+            $this->courses = Course::with('owner')
+                                ->orderBy('name', 'asc')
+                                ->get();
+        } 
+        elseif ($user->hasRole('pengajar')) {
+            $this->courses = $user->coursesAsPengajar()
+                                ->with('owner')
+                                ->orderBy('name', 'asc')
+                                ->get();
+        }
+        else {
+            $this->courses = collect();
+        }
     }
 
     public function confirmDeleteCourse(int $id): void
@@ -54,9 +67,7 @@ new class extends Component
             'message' => 'Mata kuliah berhasil dihapus!'
         ]);
 
-        $this->courses = Course::with('pengajar')
-                            ->orderBy('created_at', 'desc')
-                            ->get();
+        $this.mount();
     }
 
 }; ?>
@@ -76,12 +87,12 @@ new class extends Component
                     <div class="flex justify-between items-center mb-4">
                         <h1 class="text-xl font-bold">Daftar Mata Kuliah</h1>
 
-                        @permission('courses-create')
+                        @role('superadministrator|admin')
                             <a href="{{ route('admin.courses.create') }}" wire:navigate 
                                class="btn btn-primary btn-sm text-white">
                                 + Tambah Course Baru
                             </a>
-                        @endpermission
+                        @endrole
                     </div>
 
                     <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 p-4">
@@ -108,27 +119,32 @@ new class extends Component
                                             {{ $course->pengajar->name ?? 'N/A' }}
                                         </td>
                                         <td class="flex gap-2">
-                                            @permission('weeks-read')
-                                                <div class="card-actions justify-end">
-                                                    <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
-                                                    class="py-2 px-4 text-base rounded-md text-black bg-blue-400
-                                                    transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-500">
-                                                        Lihat Materi
-                                                    </a>
-                                                </div>
-                                            @endpermission
-                                            @permission('courses-update')
+                                            <div class="card-actions justify-end">
+                                                <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
+                                                class="py-2 px-4 text-base rounded-md text-black bg-blue-400
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-500">
+                                                    Lihat Materi
+                                                </a>
+                                            </div>
+
+                                            <a href="{{ route('courses.detail', $course) }}" wire:navigate
+                                               class="py-2 px-4 text-base rounded-md text-black bg-green-400
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-green-500">>
+                                                Detail
+                                            </a>
+                                            
+                                            @role('superadministrator|admin')
                                                 <a href="{{ route('admin.courses.edit', $course) }}" wire:navigate 
                                                     class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
                                                     transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">
                                                     Edit
                                                 </a>
-                                            @endpermission
-                                            @permission('courses-delete')
+                                            @endrole
+                                            @role('superadministrator|admin')
                                                 <button class="py-2 px-4 text-base rounded-md bg-red-600 text-black
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-700"
                                                 wire:click="confirmDeleteCourse({{ $course->id }})">Delete</button>
-                                            @endpermission
+                                            @endrole
                                         </td>
                                     </tr>
                                 @empty

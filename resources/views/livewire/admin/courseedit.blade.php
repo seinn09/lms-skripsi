@@ -58,7 +58,7 @@ new class extends Component
             'message' => 'Mata kuliah berhasil diperbarui!'
         ]);
 
-        $this->redirectRoute('admin.courses.index', navigate: true);
+        $this->redirectRoute('courses.index', navigate: true);
     }
 }; ?>
 
@@ -110,7 +110,7 @@ new class extends Component
                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
                                     Simpan
                                 </button>
-                                <a href="{{ route('admin.courses.index') }}" wire:navigate 
+                                <a href="{{ route('courses.index') }}" wire:navigate 
                                     class="btn btn-ghost bg-gray-200 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300">
                                     Batal
                                 </a>

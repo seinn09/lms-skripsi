@@ -79,12 +79,17 @@ class UserFactory extends Factory
         return $this->afterCreating(function (User $user) {
             $role = Role::firstOrCreate(['name' => 'pengajar'], [
                 'display_name' => 'Pengajar',
-                'description' => 'Pengajar atau dosen yang mengelola pelajaran'
+                'description' => 'Manajemen materi ajar'
             ]);
             $user->addRole($role);
             $user->update(['label' => 'pengajar']);
 
-            Pengajar::create(['user_id' => $user->id]);
+            Pengajar::create([
+                'user_id' => $user->id,
+                'nip' => fake()->unique()->numerify('199#######1#######'),
+                'alamat' => fake()->address(),
+                'tanggal_lahir' => fake()->date(),
+            ]);
         });
     }
 
@@ -93,12 +98,17 @@ class UserFactory extends Factory
         return $this->afterCreating(function (User $user) {
             $role = Role::firstOrCreate(['name' => 'siswa'], [
                 'display_name' => 'Siswa',
-                'description' => 'Siswa atau mahasiswa yang mengikuti pelajaran'
+                'description' => 'Akses materi ajar'
             ]);
             $user->addRole($role);
             $user->update(['label' => 'siswa']);
-
-            Siswa::create(['user_id' => $user->id]);
+            
+            Siswa::create([
+                'user_id' => $user->id,
+                'nim' => fake()->unique()->numerify('220535######'),
+                'alamat' => fake()->address(),
+                'tanggal_lahir' => fake()->date(),
+            ]);
         });
     }
 }
