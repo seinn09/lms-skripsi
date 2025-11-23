@@ -54,6 +54,13 @@ Volt::route('materials/{material}/edit', 'material-edit')
     ->middleware(['auth', 'verified', 'permission:materials-update'])
     ->name('materials.edit');
 
+Volt::route('courses/week/{week}/assignments/create', 'assignment-create')
+    ->middleware(['auth', 'verified', 'permission:assignments-create'])
+    ->name('assignments.create');
+
+Volt::route('assignments/{assignment}/edit', 'assignment-edit')
+    ->middleware(['auth', 'verified', 'permission:assignments-update'])
+    ->name('assignments.edit');
 
 Volt::route('enroll-courses', 'course-enroll')
     ->middleware(['auth', 'verified', 'role:siswa|superadministrator|admin'])

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Week extends Model
+class Assignment extends Model
 {
     use HasFactory;
 
@@ -15,24 +15,23 @@ class Week extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
-        'course_id',
-        'week_number',
+        'week_id',
         'title',
         'description',
+        'deadline',
     ];
 
-    public function course(): BelongsTo
+    protected $casts = [
+        'deadline' => 'datetime',
+    ];
+
+    public function week(): BelongsTo
     {
-        return $this->belongsTo(Course::class, 'course_id');
+        return $this->belongsTo(Week::class, 'week_id');
     }
 
-    public function materials(): HasMany
+    public function submissions(): HasMany
     {
-        return $this->hasMany(Material::class, 'week_id');
-    }
-
-    public function assignments(): HasMany
-    {
-        return $this->hasMany(Assignment::class, 'week_id');
+        return $this->hasMany(AssignmentSubmission::class, 'assignment_id');
     }
 }
