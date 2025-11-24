@@ -54,6 +54,8 @@ Volt::route('materials/{material}/edit', 'material-edit')
     ->middleware(['auth', 'verified', 'permission:materials-update'])
     ->name('materials.edit');
 
+
+#ROUTE COURSE ASSIGNMENTS
 Volt::route('courses/week/{week}/assignments/create', 'assignment-create')
     ->middleware(['auth', 'verified', 'permission:assignments-create'])
     ->name('assignments.create');
@@ -62,6 +64,16 @@ Volt::route('assignments/{assignment}/edit', 'assignment-edit')
     ->middleware(['auth', 'verified', 'permission:assignments-update'])
     ->name('assignments.edit');
 
+Volt::route('assignments/{assignment}', 'assignment-show')
+    ->middleware(['auth', 'verified'])
+    ->name('assignments.show');
+
+#ROUTE SUBMISSIONS
+Volt::route('assignments/{assignment}/submission', 'submission-edit')
+    ->middleware(['auth', 'verified'])
+    ->name('assignments.submission');
+
+#ROUTE COURSE ENROLLMENT FOR STUDENTS
 Volt::route('enroll-courses', 'course-enroll')
     ->middleware(['auth', 'verified', 'role:siswa|superadministrator|admin'])
     ->name('courses.enroll.index');
@@ -89,6 +101,15 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Volt::route('pengguna/{user}/edit', 'admin.penggunaedit')
         ->middleware(['permission:users-update'])
         ->name('pengguna.edit');
+
+    #ROUTE UNTUK ASSIGNMENT SUBMISSIONS MANAGEMENT
+    Volt::route('assignments/{assignment}/class/{class}/grading', 'admin.assignment-class-grades')
+        ->middleware(['auth', 'verified', 'permission:submissions-update'])
+        ->name('assignments.grading.class');
+
+    Volt::route('assignments/{assignment}/class/{class}/grading/{student}', 'admin.assignment-grading')
+        ->middleware(['auth', 'verified', 'permission:submissions-update'])
+        ->name('assignments.grading.student');
 
     #ROUTE UNTUK ENROLL
     Volt::route('enrollment', 'admin.enrollment')

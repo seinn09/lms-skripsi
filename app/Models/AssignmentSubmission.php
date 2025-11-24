@@ -21,6 +21,7 @@ class AssignmentSubmission extends Model
         'file_path',
         'text_content',
         'grade',
+        'comment_sub',
         'submitted_at',
     ];
 

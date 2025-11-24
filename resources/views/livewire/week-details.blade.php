@@ -46,7 +46,7 @@ new class extends Component
     #[Computed]
     public function items()
     {
-        return $this->materials->merge($this->assignments)->sortBy('title');
+        return $this->materials->concat($this->assignments)->sortBy('title');
     }
 
     public function confirmDeleteMaterial(int $id): void
@@ -168,11 +168,25 @@ new class extends Component
             
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
+                    
                     <div class="flex justify-between items-center mb-4">
-                        <h1 class="text-2xl font-bold">{{ $week->title }}</h1>
+                        <div class="flex items-center gap-2">
+                            
+                            <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
+                               class="btn btn-ghost btn-sm btn-circle"
+                               title="Kembali ke Daftar Pertemuan">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </a>
+
+                            <h1 class="text-2xl font-bold">{{ $week->title }}</h1>
+                        </div>
+
                         @permission('weeks-update')
                             <a href="{{ route('courses.materials.edit', ['week' => $week]) }}" wire:navigate
-                               class="btn btn-ghost btn-sm btn-circle">
+                               class="btn btn-ghost btn-sm btn-circle"
+                               title="Edit Pertemuan">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                                 </svg>
@@ -180,13 +194,15 @@ new class extends Component
                         @endpermission
                     </div>
                     
-                    @if ($week->description)
-                        <div class="prose max-w-none">
-                            <p>{{ $week->description }}</p>
-                        </div>
-                    @else
-                        <p class="text-gray-500">Belum ada deskripsi untuk pertemuan ini.</p>
-                    @endif
+                    <div class="pl-10"> @if ($week->description)
+                            <div class="prose max-w-none">
+                                <p>{{ $week->description }}</p>
+                            </div>
+                        @else
+                            <p class="text-gray-500 italic">Belum ada deskripsi untuk pertemuan ini.</p>
+                        @endif
+                    </div>
+
                 </div>
             </div>
 
@@ -231,8 +247,8 @@ new class extends Component
                                         
                                         <td class="flex gap-2">
                                             @if ($item instanceof \App\Models\Assignment)
-                                                @permission('submissions-create')
-                                                    <a href="#" class="btn btn-xs bg-blue-500 font-bold
+                                                @permission('assignments-read')
+                                                    <a href="{{ route('assignments.show', $item) }}" class="btn btn-xs bg-blue-500 font-bold
                                                     text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">Lihat Tugas</a>
                                                 @endpermission
                                                 @permission('assignments-update')

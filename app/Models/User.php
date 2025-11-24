@@ -74,4 +74,9 @@ class User extends Authenticatable implements LaratrustUser
     {
         return $this->hasOne(Siswa::class, 'user_id');
     }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(AssignmentSubmission::class, 'user_id');
+    }
 }
