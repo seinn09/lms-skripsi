@@ -20,6 +20,7 @@ class Course extends Model
      */
     protected $fillable = [
         'course_code',
+        'study_program_id',
         'name',
         'description',
         'user_id',
@@ -38,6 +39,11 @@ class Course extends Model
     public function courseClasses(): HasMany
     {
         return $this->hasMany(CourseClass::class, 'course_id');
+    }
+
+    public function studyProgram(): BelongsTo
+    {
+        return $this->belongsTo(StudyProgram::class, 'study_program_id');
     }
 
 }

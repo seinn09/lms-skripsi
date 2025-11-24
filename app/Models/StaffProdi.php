@@ -6,25 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Pengajar extends Model
+class StaffProdi extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'user_id',
+        'study_program_id',
         'nip',
-        'alamat',
-        'tanggal_lahir',
-        'department_id'
     ];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
+    }
+
+    public function studyProgram(): BelongsTo
+    {
+        return $this->belongsTo(StudyProgram::class);
     }
 }

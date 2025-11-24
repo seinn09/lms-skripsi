@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
     {
         $this->truncateUserTables();
 
-        $this->command->info('Membuat 7 Akun Pengguna...');
+        $this->command->info('Membuat 9 Akun Pengguna...');
 
         User::factory()->superAdministrator()->create([
             'name' => 'Superadministrator',
@@ -34,6 +34,18 @@ class UserSeeder extends Seeder
         User::factory()->admin()->create([
             'name' => 'Admin 2',
             'email' => 'admin2@app.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        #AKUN UNTUK STAFF PRODI
+        User::factory()->staffProdi()->create([
+            'name' => 'Staff TI', 
+            'email' => 'staff_ti@app.com', 
+            'password' => bcrypt('password'),
+        ]);
+        User::factory()->staffProdi()->create([
+            'name' => 'Staff Elektro', 
+            'email' => 'staff_te@app.com', 
             'password' => bcrypt('password'),
         ]);
 
@@ -61,7 +73,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        $this->command->info('7 Akun Pengguna (Superadmin, Admin x2, Pengajar x2, Siswa x2) berhasil dibuat.');
+        $this->command->info('9 Akun Pengguna (Superadmin, Admin x2, Pengajar x2, Siswa x2) berhasil dibuat.');
     }
 
     public function truncateUserTables()
@@ -74,6 +86,7 @@ class UserSeeder extends Seeder
         
         DB::table('pengajars')->truncate();
         DB::table('siswas')->truncate();
+        DB::table('staff_prodis')->truncate();
         
         $usersTable = (new User)->getTable(); 
         DB::table($usersTable)->truncate();

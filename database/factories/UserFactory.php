@@ -6,7 +6,10 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Siswa;
 use App\Models\Pengajar;
+use App\Models\Department;
+use App\Models\StaffProdi;
 use Illuminate\Support\Str;
+use App\Models\StudyProgram;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -74,18 +77,39 @@ class UserFactory extends Factory
         });
     }
 
+    public function staffProdi(): static
+    {
+        return $this->afterCreating(function (User $user) {
+            $role = Role::firstOrCreate(['name' => 'staff_prodi'], [
+                'display_name' => 'Staff Prodi', 'description' => 'Admin tingkat Program Studi'
+            ]);
+            $user->addRole($role);
+            $user->update(['label' => 'staff_prodi']);
+
+            $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+
+            StaffProdi::create([
+                'user_id' => $user->id,
+                'study_program_id' => $prodi->id,
+                'nip' => fake()->unique()->numerify('198#######1#######'),
+            ]);
+        });
+    }
+
     public function pengajar(): static
     {
         return $this->afterCreating(function (User $user) {
             $role = Role::firstOrCreate(['name' => 'pengajar'], [
-                'display_name' => 'Pengajar',
-                'description' => 'Manajemen materi ajar'
+                'display_name' => 'Pengajar', 'description' => 'Manajemen materi ajar'
             ]);
             $user->addRole($role);
             $user->update(['label' => 'pengajar']);
 
+            $dept = Department::inRandomOrder()->first() ?? Department::factory()->create();
+
             Pengajar::create([
                 'user_id' => $user->id,
+                'department_id' => $dept->id,
                 'nip' => fake()->unique()->numerify('199#######1#######'),
                 'alamat' => fake()->address(),
                 'tanggal_lahir' => fake()->date(),
@@ -97,14 +121,16 @@ class UserFactory extends Factory
     {
         return $this->afterCreating(function (User $user) {
             $role = Role::firstOrCreate(['name' => 'siswa'], [
-                'display_name' => 'Siswa',
-                'description' => 'Akses materi ajar'
+                'display_name' => 'Siswa', 'description' => 'Akses materi ajar'
             ]);
             $user->addRole($role);
             $user->update(['label' => 'siswa']);
             
+            $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+
             Siswa::create([
                 'user_id' => $user->id,
+                'study_program_id' => $prodi->id, // <-- WAJIB DIISI
                 'nim' => fake()->unique()->numerify('220535######'),
                 'alamat' => fake()->address(),
                 'tanggal_lahir' => fake()->date(),

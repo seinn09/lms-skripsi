@@ -20,6 +20,7 @@ class Siswa extends Model
         'nip',
         'alamat',
         'tanggal_lahir',
+        'study_program_id'
     ];
 
     public function user(): BelongsTo

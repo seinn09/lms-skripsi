@@ -2,14 +2,21 @@
 
 namespace App\Models;
 
-use Laratrust\Contracts\LaratrustUser;
-use Laratrust\Traits\HasRolesAndPermissions;
+use App\Models\Siswa;
+use App\Models\Course;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Pengajar;
+use App\Models\StaffProdi;
+use App\Models\CourseClass;
+use Laravel\Sanctum\HasApiTokens;
+use App\Models\AssignmentSubmission;
+use Laratrust\Contracts\LaratrustUser;
+use Illuminate\Notifications\Notifiable;
+use Laratrust\Traits\HasRolesAndPermissions;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements LaratrustUser
@@ -78,5 +85,10 @@ class User extends Authenticatable implements LaratrustUser
     public function submissions(): HasMany
     {
         return $this->hasMany(AssignmentSubmission::class, 'user_id');
+    }
+
+    public function staffProdi(): HasOne
+    {
+        return $this->hasOne(StaffProdi::class, 'user_id');
     }
 }

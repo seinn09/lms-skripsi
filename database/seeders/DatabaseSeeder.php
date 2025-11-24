@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LaratrustSeeder::class,
             UserSeeder::class,
+            OrganizationSeeder::class,
             CourseSeeder::class,
         ]);
     }
