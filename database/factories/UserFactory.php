@@ -130,7 +130,7 @@ class UserFactory extends Factory
 
             Siswa::create([
                 'user_id' => $user->id,
-                'study_program_id' => $prodi->id, // <-- WAJIB DIISI
+                'study_program_id' => $prodi->id,
                 'nim' => fake()->unique()->numerify('220535######'),
                 'alamat' => fake()->address(),
                 'tanggal_lahir' => fake()->date(),

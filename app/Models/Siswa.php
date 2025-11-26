@@ -15,16 +15,15 @@ class Siswa extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'user_id',
-        'nip',
-        'alamat',
-        'tanggal_lahir',
-        'study_program_id'
-    ];
+    protected $fillable = ['user_id', 'study_program_id', 'nim', 'alamat', 'tanggal_lahir'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function studyProgram(): BelongsTo
+    {
+        return $this->belongsTo(StudyProgram::class, 'study_program_id');
     }
 }

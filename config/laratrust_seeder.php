@@ -31,6 +31,7 @@ return [
             'course_classes' => 'c,r,u,d',
             'weeks' => 'c,r,u,d',
             'materials' => 'c,r,u,d',
+            'manage_enrollment_status' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
             'submissions' => 'c,r,u,d',
         ],
@@ -49,6 +50,7 @@ return [
             'course_classes' => 'c,r,u,d',
             'weeks' => 'c,r,u,d',
             'materials' => 'c,r,u,d',
+            'manage_enrollment_status' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
             'submissions' => 'c,r,u,d',
         ],
@@ -76,8 +78,7 @@ return [
             'submissions' => 'r,u',
         ],
         
-        'siswa' => [
-            'courses' => 'r',         
+        'siswa' => [        
             'course_classes' => 'r',
             'weeks' => 'r',
             'materials' => 'r',

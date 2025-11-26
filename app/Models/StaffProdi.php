@@ -10,11 +10,7 @@ class StaffProdi extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'study_program_id',
-        'nip',
-    ];
+    protected $fillable = ['user_id', 'study_program_id', 'nip'];
 
     public function user(): BelongsTo
     {

@@ -97,12 +97,12 @@ new class extends Component
                                         
                                         <td class="flex gap-2">
                                             @if ($class->status == 'open')
-                                                 <button type="submit" wire:click="closeEnrollment({{ $class->id }})" class="btn bg-red-400 px-4 font-bold
+                                                 <button type="submit" wire:click="closeEnrollment({{ $class->id }})" class="py-2 px-4 bg-red-400 font-bold rounded-md
                                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-500">
                                                     Tutup Pendaftaran
                                                 </button>
                                             @else
-                                                <button type="submit" wire:click="openEnrollment({{ $class->id }})" class="btn bg-blue-500 px-4 font-bold
+                                                <button type="submit" wire:click="openEnrollment({{ $class->id }})" class="py-2 px-4 bg-blue-500 font-bold rounded-md
                                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
                                                     Buka Pendaftaran
                                                 </button>

@@ -19,6 +19,18 @@ new class extends Component
                                 ->orderBy('name', 'asc')
                                 ->get();
         } 
+        elseif ($user->hasRole('staff_prodi')) {
+            if ($user->staffProdi) {
+                $prodiId = $user->staffProdi->study_program_id;
+                
+                $this->courses = Course::where('study_program_id', $prodiId)
+                                    ->with('owner')
+                                    ->orderBy('name', 'asc')
+                                    ->get();
+            } else {
+                $this->courses = collect();
+            }
+        }
         elseif ($user->hasRole('pengajar')) {
             $this->courses = $user->coursesAsPengajar()
                                 ->with('owner')
@@ -26,7 +38,7 @@ new class extends Component
                                 ->get();
         }
         else {
-            $this->courses = collect();
+            $this->courses = new Collection();
         }
     }
 

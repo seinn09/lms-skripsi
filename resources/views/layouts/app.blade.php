@@ -1,40 +1,3 @@
-{{-- <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-
-        <title>{{ config('app.name', 'Laravel') }}</title>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
-            <livewire:layout.navigation />
-
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
-
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
-        </div>
-    </body>
-</html> --}}
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light" class="scroll-smooth">
     <head>
@@ -80,7 +43,7 @@
             <div class="drawer-side">
                 <label for="my-drawer-1" aria-label="close sidebar" class="drawer-overlay"></label>
                 
-                <ul class="menu bg-base-200 min-h-full w-65 p-4">
+                <ul class="menu bg-base-200 min-h-full w-72 p-4">
                     
                     <li class="mb-2">
                         <a href="{{ route('dashboard') }}" wire:navigate class="text-xl font-bold">
@@ -95,30 +58,60 @@
                         </a>
                     </li>
 
-                    @permission('users-create')
-                        <li>
-                            <a href="{{ route('admin.pengguna.index') }}" wire:navigate 
-                            @class(['active' => request()->routeIs('admin.pengguna.index')])>
-                                Pengguna
-                            </a>
-                        </li>
-                    @endpermission
+                    @if(auth()->check() && auth()->user()->hasPermission(['staff_prodis-read', 'pengajars-read', 'siswas-read']))
+                    <li>
+                        <details {{ request()->routeIs('admin.staff.*', 'admin.pengajars.*', 'admin.siswas.*') ? 'open' : '' }}>
+                            
+                            <summary class="list-none [&::-webkit-details-marker]:hidden">
+                                Manajemen Pengguna
+                            </summary>
+                            
+                            <ul>
+                                @permission('staff_prodis-read')
+                                <li>
+                                    <a href="{{ route('admin.staff.index') }}" wire:navigate 
+                                    @class(['active' => request()->routeIs('admin.staff.*')])>
+                                        Staff Prodi
+                                    </a>
+                                </li>
+                                @endpermission
 
-                    @role('superadministrator|admin|pengajar')
-                        <li>
-                            <a href="{{ route('courses.index') }}" wire:navigate 
-                                @class(['active' => request()->routeIs('courses.index')])>
-                                Mata Kuliah
-                            </a>
-                        </li>
-                    @endrole
+                                @permission('pengajars-read')
+                                <li>
+                                    <a href="{{ route('admin.academic.users.index', ['tab' => 'dosen']) }}" wire:navigate 
+                                    @class(['active' => request()->routeIs('admin.pengajars.*')])>
+                                        Dosen
+                                    </a>
+                                </li>
+                                @endpermission
 
+                                @permission('siswas-read')
+                                <li>
+                                    <a href="{{ route('admin.academic.users.index', ['tab' => 'mahasiswa']) }}" wire:navigate 
+                                    @class(['active' => request()->routeIs('admin.siswas.*')])>
+                                        Mahasiswa
+                                    </a>
+                                </li>
+                                @endpermission
+                            </ul>
 
-                    @permission('manage_enrollment_status-create')
+                        </details>
+                    </li>
+                    @endif
+
+                    @permission('manage_enrollment_status-read')
                         <li>
                             <a href="{{ route('admin.enrollment.index') }}" wire:navigate 
                             @class(['active' => request()->routeIs('admin.enrollment.index')])>
                                 Kelola Pendaftaran
+                            </a>
+                        </li>
+                    @endpermission
+
+                    @permission('courses-read') 
+                        <li>
+                            <a href="{{ route('courses.index') }}" wire:navigate @class(['active' => request()->routeIs('courses.index')])>
+                                Mata Kuliah
                             </a>
                         </li>
                     @endpermission

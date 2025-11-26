@@ -25,12 +25,12 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 Volt::route('courses', 'admin.courses')
-    ->middleware(['role:superadministrator|admin|pengajar'])
+    ->middleware(['permission:courses-read', 'auth', 'verified'])
     ->name('courses.index');
 
 #ROUTE COURSE DETAIL
 Volt::route('courses/{course}/detail', 'admin.course-detail')
-    ->middleware(['role:superadministrator|admin|pengajar'])
+    ->middleware(['permission:courses-read', 'auth', 'verified'])
     ->name('courses.detail');
 
 #ROUTE COURSE MATERIALS
@@ -89,18 +89,31 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->middleware(['role:superadministrator|admin'])
         ->name('courses.edit');
 
-    #ROUTE MANAGE PENGGUNA
-    Volt::route('pengguna', 'admin.pengguna')
-        ->middleware(['permission:users-read'])
-        ->name('pengguna.index');
+    #ROUTE MANAGE DOSEN DAN MAHASISWA
+    Volt::route('academic-users', 'admin.academic-users.index')
+        ->middleware(['permission:pengajars-read|siswas-read']) 
+        ->name('academic.users.index');
 
-    Volt::route('pengguna/create', 'admin.penggunacreate')
-        ->middleware(['permission:users-create'])
-        ->name('pengguna.create');
+    Volt::route('academic-users/create', 'admin.academic-users.create')
+            ->middleware(['permission:pengajars-create|siswas-create']) 
+            ->name('academic.users.create');   
+            
+    Volt::route('academic-users/{user}/edit', 'admin.academic-users.edit')
+            ->middleware(['permission:pengajars-update|siswas-update']) 
+            ->name('academic.users.edit');
 
-    Volt::route('pengguna/{user}/edit', 'admin.penggunaedit')
-        ->middleware(['permission:users-update'])
-        ->name('pengguna.edit');
+    #ROUTE MANAGE STAFF
+    Volt::route('staff', 'admin.staff.index')
+        ->middleware(['permission:staff_prodis-read'])
+        ->name('staff.index');
+
+    Volt::route('staff/create', 'admin.staff.create')
+        ->middleware(['permission:staff_prodis-create'])
+        ->name('staff.create');
+
+    Volt::route('staff/{user}/edit', 'admin.staff.edit')
+        ->middleware(['permission:staff_prodis-update'])
+        ->name('staff.edit');
 
     #ROUTE UNTUK ASSIGNMENT SUBMISSIONS MANAGEMENT
     Volt::route('assignments/{assignment}/class/{class}/grading', 'admin.assignment-class-grades')
