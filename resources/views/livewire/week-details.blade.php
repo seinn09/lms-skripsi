@@ -26,6 +26,27 @@ new class extends Component
     {
         $this->course = $course;
         $this->week = $week;
+        $user = auth()->user();
+
+        // Authorization check for students
+        if ($user->hasRole('siswa')) {
+            // Check if student is enrolled in any class of this course
+            $isEnrolled = $user->enrolledClasses()
+                ->whereHas('course', function ($query) use ($course) {
+                    $query->where('id', $course->id);
+                })
+                ->exists();
+
+            if (!$isEnrolled) {
+                session()->flash('notify', [
+                    'type' => 'error',
+                    'message' => 'Anda tidak memiliki akses ke mata kuliah ini. Silakan daftar terlebih dahulu.'
+                ]);
+                $this->redirectRoute('dashboard', navigate: true);
+                return;
+            }
+        }
+
         $this->loadItems();
 
         $this->previousWeek = Week::where('course_id', $this->course->id)

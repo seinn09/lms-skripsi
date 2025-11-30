@@ -46,4 +46,21 @@ class Course extends Model
         return $this->belongsTo(StudyProgram::class, 'study_program_id');
     }
 
+    public function scopeSearch($query, $term)
+    {
+        if (empty($term)) {
+            return $query;
+        }
+
+        $term = strtolower($term);
+        $term = "%$term%";
+        $query->where(function ($query) use ($term) {
+            $query->whereRaw('LOWER(course_code) like ?', [$term])
+                ->orWhereRaw('LOWER(name) like ?', [$term])
+                ->orWhereHas('owner', function ($query) use ($term) {
+                    $query->whereRaw('LOWER(name) like ?', [$term]);
+                });
+        });
+    }
+
 }

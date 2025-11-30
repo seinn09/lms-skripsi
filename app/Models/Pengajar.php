@@ -15,15 +15,15 @@ class Pengajar extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = ['user_id', 'department_id', 'nip', 'alamat', 'tanggal_lahir'];
+    protected $fillable = ['user_id', 'study_program_id', 'nip', 'alamat', 'tanggal_lahir'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function department(): BelongsTo
+    public function studyProgram(): BelongsTo
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsTo(StudyProgram::class, 'study_program_id');
     }
 }

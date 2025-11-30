@@ -35,11 +35,11 @@ new class extends Component
 
         if ($this->tab === 'dosen') {
             $query->whereHas('roles', fn($q) => $q->where('name', 'pengajar'))
-                  ->with('pengajar.department');
+                  ->with('pengajar.studyProgram');
 
             if ($currentUser->hasRole('staff_prodi')) {
-                $deptId = $currentUser->staffProdi->studyProgram->department_id;
-                $query->whereHas('pengajar', fn($q) => $q->where('department_id', $deptId));
+                $prodiId = $currentUser->staffProdi->study_program_id;
+                $query->whereHas('pengajar', fn($q) => $q->where('study_program_id', $prodiId));
             }
 
         } else {
@@ -97,7 +97,7 @@ new class extends Component
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div class="flex flex-row md:flex-row justify-between items-center mb-6 gap-4">
                         
                         <div role="tablist" class="tabs tabs-boxed">
                             <a role="tab" 
@@ -133,7 +133,7 @@ new class extends Component
                                 <tr class="border bg-base-200 rounded-xl">
                                     <th>Nama Lengkap</th>
                                     <th>Email</th>
-                                    <th>{{ $tab === 'dosen' ? 'NIP / Departemen' : 'NIM / Prodi' }}</th>
+                                    <th>{{ $tab === 'dosen' ? 'NIP / Program Studi' : 'NIM / Prodi' }}</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -147,7 +147,7 @@ new class extends Component
                                                 <div class="flex flex-col">
                                                     <span class="font-semibold">{{ $user->pengajar->nip ?? '-' }}</span>
                                                     <span class="text-xs text-gray-500">
-                                                        {{ $user->pengajar->department->name ?? 'Dept tidak set' }}
+                                                        {{ $user->pengajar->studyProgram->name ?? 'Prodi tidak set' }}
                                                     </span>
                                                 </div>
                                             @else

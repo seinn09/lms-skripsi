@@ -34,7 +34,6 @@ new class extends Component
 
     public string $identity_number = '';
 
-    public ?int $department_id = null;
     public ?int $study_program_id = null;
 
 
@@ -62,7 +61,6 @@ new class extends Component
                 $this->departments = new Collection([$myProdi->department]);
 
                 $this->study_program_id = $myProdi->id;
-                $this->department_id = $myProdi->department_id;
             }
         } else {
             $this->departments = Department::orderBy('name')->get();
@@ -92,7 +90,7 @@ new class extends Component
         if ($this->type === 'dosen') {
             $this->validate([
                 'identity_number' => 'required|unique:pengajars,nip',
-                'department_id' => 'required|exists:departments,id',
+                'study_program_id' => 'required|exists:study_programs,id',
             ], [
                 'identity_number.required' => 'NIP wajib diisi.',
                 'identity_number.unique' => 'NIP sudah terdaftar.',
@@ -118,7 +116,7 @@ new class extends Component
 
             Pengajar::create([
                 'user_id' => $user->id,
-                'department_id' => $this->department_id,
+                'study_program_id' => $this->study_program_id,
                 'nip' => $this->identity_number,
             ]);
         });
@@ -210,19 +208,19 @@ new class extends Component
                             @error('identity_number') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                             @if($type === 'dosen')
-                                <label class="label mt-4" for="department_id">Homebase Departemen</label>
-                                <select id="department_id" 
+                                <label class="label mt-4" for="study_program_id">Program Studi</label>
+                                <select id="study_program_id" 
                                         class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500" 
-                                        wire:model="department_id"
+                                        wire:model="study_program_id"
                                         @if($isStaffProdi) disabled @endif>
                                     
-                                    <option value="">-- Pilih Departemen --</option>
-                                    @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    <option value="">-- Pilih Program Studi --</option>
+                                    @foreach ($studyPrograms as $prodi)
+                                        <option value="{{ $prodi->id }}">{{ $prodi->name }} ({{ $prodi->degree }})</option>
                                     @endforeach
                                 </select>
                                 @if($isStaffProdi) <span class="text-xs text-gray-500 mt-1">Otomatis terisi sesuai penugasan Anda.</span> @endif
-                                @error('department_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('study_program_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @endif
 
                             @if($type === 'mahasiswa')

@@ -33,7 +33,6 @@ new class extends Component
     public string $password = '';
     public string $password_confirmation = '';
     public string $identity_number = '';
-    public ?int $department_id = null;
     public ?int $study_program_id = null;
 
     public function mount(User $user): void
@@ -43,7 +42,7 @@ new class extends Component
         if ($user->hasRole('pengajar')) {
             $this->type = 'dosen';
             $this->identity_number = $user->pengajar->nip ?? '';
-            $this->department_id = $user->pengajar->department_id ?? null;
+            $this->study_program_id = $user->pengajar->study_program_id ?? null;
         } elseif ($user->hasRole('siswa')) {
             $this->type = 'mahasiswa';
             $this->identity_number = $user->siswa->nim ?? '';
@@ -95,7 +94,7 @@ new class extends Component
                 $this->user->pengajar()->updateOrCreate(
                     ['user_id' => $this->user->id],
                     [
-                        'department_id' => $this->department_id,
+                        'study_program_id' => $this->study_program_id,
                         'nip' => $this->identity_number
                     ]
                 );
@@ -127,7 +126,7 @@ new class extends Component
 
         if ($this->type === 'dosen') {
             $this->validate([
-                'department_id' => 'required|exists:departments,id',
+                'study_program_id' => 'required|exists:study_programs,id',
                 'identity_number' => [
                     'required',
                     ValidationRule::unique('pengajars', 'nip')->ignore($this->user->pengajar?->id),
@@ -200,17 +199,17 @@ new class extends Component
                             @error('identity_number') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                             @if($type === 'dosen')
-                                <label class="label mt-4" for="department_id">Homebase Departemen</label>
-                                <select id="department_id" 
+                                <label class="label mt-4" for="study_program_id">Program Studi</label>
+                                <select id="study_program_id" 
                                         class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500" 
-                                        wire:model="department_id"
+                                        wire:model="study_program_id"
                                         @if($isStaffProdi) disabled @endif>
-                                    <option value="">-- Pilih Departemen --</option>
-                                    @foreach ($departments as $dept)
-                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    <option value="">-- Pilih Program Studi --</option>
+                                    @foreach ($studyPrograms as $prodi)
+                                        <option value="{{ $prodi->id }}">{{ $prodi->name }} ({{ $prodi->degree }})</option>
                                     @endforeach
                                 </select>
-                                @error('department_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('study_program_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             @endif
 
                             @if($type === 'mahasiswa')

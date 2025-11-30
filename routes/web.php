@@ -82,11 +82,11 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     #ROUTE MANAGE COURSEs
     Volt::route('courses/create', 'admin.coursecreate') 
-        ->middleware(['role:superadministrator|admin']) 
+        ->middleware(['permission:courses-create']) 
         ->name('courses.create');
 
     Volt::route('courses/{course}/edit', 'admin.courseedit')
-        ->middleware(['role:superadministrator|admin'])
+        ->middleware(['permission:courses-update'])
         ->name('courses.edit');
 
     #ROUTE MANAGE DOSEN DAN MAHASISWA

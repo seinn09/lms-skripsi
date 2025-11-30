@@ -2,44 +2,107 @@
 
 use Livewire\Volt\Component;
 use App\Models\Course;
+use App\Models\Faculty;
+use App\Models\Department;
+use App\Models\StudyProgram;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
     public Collection $courses;
+    public string $search = '';
+
+    public $selectedFaculty = null;
+    public $selectedDept = null;
+    public $selectedProdi = null;
+
+    public Collection $faculties;
+    public Collection $departments;
+    public Collection $studyPrograms;
 
     public ?int $idToDelete = null;
 
     public function mount(): void
     {
-        $user = Auth::user();
+        $this->faculties = Faculty::orderBy('name')->get();
+        $this->departments = new Collection();
+        $this->studyPrograms = new Collection();
+        
+        $this->loadCourses();
+    }
 
-        if ($user->hasRole('superadministrator|admin')) {
-            $this->courses = Course::with('owner')
-                                ->orderBy('name', 'asc')
-                                ->get();
-        } 
-        elseif ($user->hasRole('staff_prodi')) {
-            if ($user->staffProdi) {
-                $prodiId = $user->staffProdi->study_program_id;
-                
-                $this->courses = Course::where('study_program_id', $prodiId)
-                                    ->with('owner')
-                                    ->orderBy('name', 'asc')
-                                    ->get();
-            } else {
-                $this->courses = collect();
-            }
+    public function updatedSearch()
+    {
+        $this->loadCourses();
+    }
+
+    public function updatedSelectedFaculty($value)
+    {
+        if (empty($value)) {
+            $this->selectedFaculty = null;
+            $this->departments = new Collection();
+        } else {
+            $this->departments = Department::where('faculty_id', $value)->orderBy('name')->get();
+        }
+        
+        $this->studyPrograms = new Collection();
+        $this->selectedDept = null;
+        $this->selectedProdi = null;
+        $this->loadCourses();
+    }
+
+    public function updatedSelectedDept($value)
+    {
+        if (empty($value)) {
+            $this->selectedDept = null;
+            $this->studyPrograms = new Collection();
+        } else {
+            $this->studyPrograms = StudyProgram::where('department_id', $value)->orderBy('name')->get();
+        }
+
+        $this->selectedProdi = null;
+        $this->loadCourses();
+    }
+
+    public function updatedSelectedProdi($value)
+    {
+        if (empty($value)) {
+            $this->selectedProdi = null;
+        }
+        $this->loadCourses();
+    }
+
+    public function loadCourses(): void
+    {
+        $user = Auth::user();
+        $query = Course::with(['owner', 'studyProgram.department.faculty'])
+                    ->search($this->search);
+
+        if ($user->hasRole('staff_prodi') && $user->staffProdi) {
+            $query->where('study_program_id', $user->staffProdi->study_program_id);
         }
         elseif ($user->hasRole('pengajar')) {
-            $this->courses = $user->coursesAsPengajar()
-                                ->with('owner')
-                                ->orderBy('name', 'asc')
-                                ->get();
+            $query->where('user_id', $user->id);
         }
-        else {
-            $this->courses = new Collection();
+
+        if (!empty($this->selectedFaculty)) {
+            $query->whereHas('studyProgram.department', function ($q) {
+                $q->where('faculty_id', $this->selectedFaculty);
+            });
         }
+
+        if (!empty($this->selectedDept)) {
+            $query->whereHas('studyProgram', function ($q) {
+                $q->where('department_id', $this->selectedDept);
+            });
+        }
+
+        if (!empty($this->selectedProdi)) {
+            $query->where('study_program_id', $this->selectedProdi);
+        }
+
+        $this->courses = $query->orderBy('name', 'asc')->get();
     }
 
     public function confirmDeleteCourse(int $id): void
@@ -96,15 +159,63 @@ new class extends Component
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
+                    @role('superadministrator|admin')
+                    <div class="flex flex-col gap-4 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {{-- Filter Fakultas --}}
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Filter Fakultas</span>
+                                </label>
+                                <select wire:model.live="selectedFaculty" class="select select-bordered w-full">
+                                    <option value="">Semua Fakultas</option>
+                                    @foreach($faculties as $faculty)
+                                        <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Filter Departemen --}}
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Filter Departemen</span>
+                                </label>
+                                <select wire:model.live="selectedDept" class="select select-bordered w-full" @if($departments->isEmpty()) disabled @endif>
+                                    <option value="">Semua Departemen</option>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Filter Prodi --}}
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Filter Program Studi</span>
+                                </label>
+                                <select wire:model.live="selectedProdi" class="select select-bordered w-full" @if($studyPrograms->isEmpty()) disabled @endif>
+                                    <option value="">Semua Program Studi</option>
+                                    @foreach($studyPrograms as $prodi)
+                                        <option value="{{ $prodi->id }}">{{ $prodi->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    @endrole
+
                     <div class="flex justify-between items-center mb-4">
                         <h1 class="text-xl font-bold">Daftar Mata Kuliah</h1>
+                        <div class="flex gap-3 items-center">
+                            <input type="text" wire:model.live="search" class="input w-full border-black rounded-xl" placeholder="Cari Kode MK, Nama, atau Dosen...">
 
-                        @role('superadministrator|admin')
-                            <a href="{{ route('admin.courses.create') }}" wire:navigate 
-                               class="btn btn-primary btn-sm text-white">
-                                + Tambah Course Baru
-                            </a>
-                        @endrole
+                            @permission('courses-create')
+                                <a href="{{ route('admin.courses.create') }}" wire:navigate 
+                                class="btn btn-primary btn-sm text-white">
+                                    + Tambah Course Baru
+                                </a>
+                            @endpermission
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 p-4">
@@ -124,9 +235,6 @@ new class extends Component
                                             <span class="badge badge-info">{{ $course->course_code }}</span>
                                         </td>
                                         <td>{{ $course->name }}</td>
-                                        <td>
-                                            {{ $course->owner->name ?? 'N/A' }}
-                                        </td>
                                         <td>
                                             {{ $course->pengajar->name ?? 'N/A' }}
                                         </td>

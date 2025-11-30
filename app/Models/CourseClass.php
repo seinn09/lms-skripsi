@@ -39,4 +39,19 @@ class CourseClass extends Model
     {
         return $this->belongsToMany(User::class, 'course_student', 'course_class_id', 'user_id');
     }
+
+    public function scopeSearch($query, $term)
+    {
+        $term = strtolower($term);
+        $term = "%$term%";
+        $query->where(function ($query) use ($term) {
+            $query->whereRaw('LOWER(class_code) like ?', [$term])
+                ->orWhereHas('course', function ($query) use ($term) {
+                    $query->whereRaw('LOWER(name) like ?', [$term]);
+                })
+                ->orWhereHas('pengajar', function ($query) use ($term) {
+                    $query->whereRaw('LOWER(name) like ?', [$term]);
+                });
+        });
+    }
 }

@@ -18,13 +18,22 @@ new class extends Component
 
     public function loadClasses(): void
     {
-        $enrolledClassIds = Auth::user()->enrolledClasses()
+        $user = Auth::user();
+        $enrolledClassIds = $user->enrolledClasses()
                                 ->pluck('course_classes.id');
 
-        $this->availableClasses = CourseClass::with(['course', 'pengajar'])
+        $query = CourseClass::with(['course.studyProgram', 'pengajar'])
             ->where('status', 'open')
-            ->whereNotIn('id', $enrolledClassIds)
-            ->get();
+            ->whereNotIn('id', $enrolledClassIds);
+
+        // Filter by student's study program
+        if ($user->siswa && $user->siswa->study_program_id) {
+            $query->whereHas('course', function ($q) use ($user) {
+                $q->where('study_program_id', $user->siswa->study_program_id);
+            });
+        }
+
+        $this->availableClasses = $query->get();
     }
 
     public function confirmEnroll(int $classId): void
@@ -56,7 +65,22 @@ new class extends Component
             return;
         }
 
-        Auth::user()->enrolledClasses()->attach($this->classToEnroll);
+        $user = Auth::user();
+        $courseClass = CourseClass::with('course')->find($this->classToEnroll);
+
+        // Validate that the course belongs to the student's study program
+        if ($user->siswa && $courseClass) {
+            if ($courseClass->course->study_program_id !== $user->siswa->study_program_id) {
+                session()->flash('notify', [
+                    'type' => 'error',
+                    'message' => 'Anda tidak dapat mendaftar di mata kuliah dari program studi lain!'
+                ]);
+                $this->classToEnroll = null;
+                return;
+            }
+        }
+
+        $user->enrolledClasses()->attach($this->classToEnroll);
 
         session()->flash('notify', [
             'type' => 'success',

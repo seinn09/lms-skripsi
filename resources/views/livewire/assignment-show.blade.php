@@ -24,6 +24,26 @@ new class extends Component
         $this->assignment = $assignment;
         $user = Auth::user();
 
+        // Authorization check for students
+        if ($user->hasRole('siswa')) {
+            // Check if student is enrolled in any class of this course
+            $course = $assignment->week->course;
+            $isEnrolled = $user->enrolledClasses()
+                ->whereHas('course', function ($query) use ($course) {
+                    $query->where('id', $course->id);
+                })
+                ->exists();
+
+            if (!$isEnrolled) {
+                session()->flash('notify', [
+                    'type' => 'error',
+                    'message' => 'Anda tidak memiliki akses ke tugas ini. Silakan daftar ke mata kuliah terlebih dahulu.'
+                ]);
+                $this->redirectRoute('dashboard', navigate: true);
+                return;
+            }
+        }
+
         if ($user->hasRole('siswa')) {
             $this->loadStudentData();
         } else {

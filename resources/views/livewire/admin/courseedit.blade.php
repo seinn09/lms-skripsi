@@ -4,12 +4,15 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\Rule;
 use App\Models\Course;
 use App\Models\User;
+use App\Models\StudyProgram;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Validation\Rule as ValidationRule;
 
 new class extends Component
 {
     public Course $course;
     public Collection $pengajars;
+    public Collection $studyPrograms;
 
     #[Rule('required|string|min:5')]
     public string $course_code = '';
@@ -20,8 +23,11 @@ new class extends Component
     #[Rule('nullable|string')]
     public string $description = '';
 
+    #[Rule('required|exists:study_programs,id')]
+    public ?int $study_program_id = null;
+
     #[Rule('required|exists:users,id')]
-    public int $user_id;
+    public ?int $user_id = null;
 
     public function mount(Course $course): void
     {
@@ -30,11 +36,34 @@ new class extends Component
         $this->course_code = $course->course_code;
         $this->name = $course->name;
         $this->description = $course->description;
+        $this->study_program_id = $course->study_program_id;
         $this->user_id = $course->user_id;
+
+        $this->studyPrograms = StudyProgram::orderBy('name')->get();
+        $this->loadPengajars();
+    }
+
+    public function updatedStudyProgramId($value)
+    {
+        $this->loadPengajars();
+        $this->user_id = null;
+    }
+
+    public function loadPengajars(): void
+    {
+        if (empty($this->study_program_id)) {
+            $this->pengajars = new Collection();
+            return;
+        }
 
         $this->pengajars = User::whereHas('roles', function ($query) {
             $query->where('name', 'pengajar');
-        })->get();
+        })
+        ->whereHas('pengajar', function ($query) {
+            $query->where('study_program_id', $this->study_program_id);
+        })
+        ->orderBy('name', 'asc')
+        ->get();
     }
 
     public function save(): void
@@ -48,8 +77,19 @@ new class extends Component
             ],
             'name' => 'required|string|min:3',
             'description' => 'nullable|string',
+            'study_program_id' => 'required|exists:study_programs,id',
             'user_id' => 'required|exists:users,id',
         ]);
+
+        // Additional validation: verify lecturer belongs to selected study program
+        $lecturer = User::whereHas('pengajar', function ($query) use ($validated) {
+            $query->where('study_program_id', $validated['study_program_id']);
+        })->find($validated['user_id']);
+
+        if (!$lecturer) {
+            $this->addError('user_id', 'Dosen yang dipilih tidak terdaftar di Program Studi yang dipilih.');
+            return;
+        }
 
         $this->course->update($validated);
 
@@ -97,11 +137,24 @@ new class extends Component
                                       wire:model="description"></textarea>
                             @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
-                            <label class="label mt-4" for="user_id">Dosen Pengampu</label>
-                            <select id="user_id" class="select w-full border-black rounded-xl" wire:model="user_id">
-                                @foreach ($pengajars as $pengajar)
-                                    <option value="{{ $pengajar->id }}">{{ $pengajar->name }}</option>
+                            <label class="label mt-4" for="study_program_id">Program Studi</label>
+                            <select id="study_program_id" class="select w-full border-black rounded-xl" wire:model.live="study_program_id">
+                                <option value="">-- Pilih Program Studi --</option>
+                                @foreach ($studyPrograms as $prodi)
+                                    <option value="{{ $prodi->id }}">{{ $prodi->name }} ({{ $prodi->degree }})</option>
                                 @endforeach
+                            </select>
+                            @error('study_program_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
+                            <label class="label mt-4" for="user_id">Dosen Pengampu (PJ Mata Kuliah)</label>
+                            <select id="user_id" class="select w-full border-black rounded-xl" wire:model="user_id" @if($pengajars->isEmpty()) disabled @endif>
+                                @if($pengajars->isEmpty())
+                                    <option value="">-- Pilih Program Studi terlebih dahulu --</option>
+                                @else
+                                    @foreach ($pengajars as $pengajar)
+                                        <option value="{{ $pengajar->id }}">{{ $pengajar->name }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                             @error('user_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             

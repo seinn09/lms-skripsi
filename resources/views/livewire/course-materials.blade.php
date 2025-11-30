@@ -13,6 +13,26 @@ new class extends Component
     public function mount(Course $course): void
     {
         $this->course = $course;
+        $user = auth()->user();
+
+        // Authorization check for students
+        if ($user->hasRole('siswa')) {
+            // Check if student is enrolled in any class of this course
+            $isEnrolled = $user->enrolledClasses()
+                ->whereHas('course', function ($query) use ($course) {
+                    $query->where('id', $course->id);
+                })
+                ->exists();
+
+            if (!$isEnrolled) {
+                session()->flash('notify', [
+                    'type' => 'error',
+                    'message' => 'Anda tidak memiliki akses ke mata kuliah ini. Silakan daftar terlebih dahulu.'
+                ]);
+                $this->redirectRoute('dashboard', navigate: true);
+                return;
+            }
+        }
 
         $this->weeks = $course->weeks()
                             ->orderBy('week_number', 'asc')

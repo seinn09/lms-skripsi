@@ -86,7 +86,19 @@ class UserFactory extends Factory
             $user->addRole($role);
             $user->update(['label' => 'staff_prodi']);
 
-            $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+            $prodiCode = 'TI-S1';
+
+            if ($user->email === 'staff_ti@app.com') {
+                $prodiCode = 'TI-S1';
+            } elseif ($user->email === 'staff_te@app.com') {
+                $prodiCode = 'TE-S1';
+            }
+
+            $prodi = StudyProgram::where('code', $prodiCode)->first();
+
+            if (!$prodi) {
+                $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+            }
 
             StaffProdi::create([
                 'user_id' => $user->id,
@@ -105,11 +117,17 @@ class UserFactory extends Factory
             $user->addRole($role);
             $user->update(['label' => 'pengajar']);
 
-            $dept = Department::inRandomOrder()->first() ?? Department::factory()->create();
+            $prodiCode = 'TI-S1';
+
+            $prodi = StudyProgram::where('code', $prodiCode)->first();
+
+            if (!$prodi) {
+                $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+            }
 
             Pengajar::create([
                 'user_id' => $user->id,
-                'department_id' => $dept->id,
+                'study_program_id' => $prodi->id,
                 'nip' => fake()->unique()->numerify('199#######1#######'),
                 'alamat' => fake()->address(),
                 'tanggal_lahir' => fake()->date(),
@@ -126,7 +144,19 @@ class UserFactory extends Factory
             $user->addRole($role);
             $user->update(['label' => 'siswa']);
             
-            $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+            $prodiCode = 'TI-S1';
+            
+            if ($user->email === 'siswa1@app.com') {
+                $prodiCode = 'TI-S1';
+            } elseif ($user->email === 'siswa2@app.com') {
+                $prodiCode = 'TE-S1';
+            }
+
+            $prodi = StudyProgram::where('code', $prodiCode)->first();
+
+            if (!$prodi) {
+                $prodi = StudyProgram::inRandomOrder()->first() ?? StudyProgram::factory()->create();
+            }
 
             Siswa::create([
                 'user_id' => $user->id,
