@@ -91,4 +91,9 @@ class User extends Authenticatable implements LaratrustUser
     {
         return $this->hasOne(StaffProdi::class, 'user_id');
     }
+
+    public function examAttempts(): HasMany
+    {
+        return $this->hasMany(ExamAttempt::class, 'user_id');
+    }
 }

@@ -63,4 +63,9 @@ class Course extends Model
         });
     }
 
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class, 'course_id');
+    }
+
 }

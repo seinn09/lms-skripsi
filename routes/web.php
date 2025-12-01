@@ -68,6 +68,42 @@ Volt::route('assignments/{assignment}', 'assignment-show')
     ->middleware(['auth', 'verified'])
     ->name('assignments.show');
 
+#ROUTE EXAMS
+Volt::route('courses/week/{week}/exams/create', 'admin.exam-create')
+    ->middleware(['auth', 'verified', 'permission:exams-create']) 
+    ->name('exams.create');
+
+Volt::route('exams/{exam}/edit', 'admin.exam-edit')
+    ->middleware(['auth', 'verified', 'permission:exams-update'])
+    ->name('exams.edit');
+
+#ROUTE BANK SOAL
+Volt::route('courses/{course}/questions', 'admin.course-questions')
+    ->middleware(['auth', 'verified', 'permission:questions-read'])
+    ->name('courses.questions');
+
+#ROUTE EXAM QUESTIONS
+Volt::route('exams/{exam}/questions', 'admin.exam-questions')
+    ->middleware(['auth', 'verified', 'permission:exams-update'])
+    ->name('exams.questions');
+
+Volt::route('exams/{exam}/questions/bank', 'admin.exam-question-bank')
+    ->middleware(['auth', 'verified', 'permission:exams-update'])
+    ->name('exams.questions.bank');
+
+Volt::route('courses/{course}/questions/create', 'admin.question-create')
+    ->middleware(['auth', 'verified', 'permission:questions-create'])
+    ->name('questions.create');
+
+Volt::route('questions/{question}/edit', 'admin.question-edit')
+    ->middleware(['auth', 'verified', 'permission:questions-update'])
+    ->name('questions.edit');
+
+#ROUTE PENGERJAAN UJIAN
+Volt::route('exams/{exam}/attempt', 'student.exam-index')
+    ->middleware(['auth', 'verified', 'role:siswa'])
+    ->name('exams.attempt');
+
 #ROUTE SUBMISSIONS
 Volt::route('assignments/{assignment}/submission', 'submission-edit')
     ->middleware(['auth', 'verified'])

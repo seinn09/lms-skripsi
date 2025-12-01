@@ -47,10 +47,21 @@ new class extends Component
             <div class="p-6 bg-white shadow-sm sm:rounded-lg">
                 <h1 class="text-2xl font-bold">{{ $course->name }}</h1>
                 <span class="badge badge-ghost">{{ $course->course_code }}</span>
-                <p class="mt-2 text-sm text-gray-600">
+                <p class="mx-2 text-sm text-gray-600">
                     Dosen Pengampu: {{ $course->owner->name ?? 'N/A' }}
                 </p>
-                <p class="mt-4">{{ $course->description }}</p>
+
+                @permission('questions-read')
+                    <a href="{{ route('courses.questions', $course) }}" wire:navigate 
+                    class="btn btn-outline btn-ghost btn-sm gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Bank Soal
+                    </a>
+                @endpermission
+
+                <p class="">{{ $course->description }}</p>
             </div>
 
             <div class="p-6 bg-white shadow-sm sm:rounded-lg">

@@ -35,4 +35,9 @@ class Week extends Model
     {
         return $this->hasMany(Assignment::class, 'week_id');
     }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class, 'week_id');
+    }
 }

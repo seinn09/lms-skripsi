@@ -34,6 +34,8 @@ return [
             'manage_enrollment_status' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
             'submissions' => 'c,r,u,d',
+            'exams' => 'c,r,u,d',
+            'questions' => 'c,r,u,d',
         ],
 
         'admin' => [
@@ -53,6 +55,8 @@ return [
             'manage_enrollment_status' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
             'submissions' => 'c,r,u,d',
+            'exams' => 'c,r,u,d',
+            'questions' => 'c,r,u,d',
         ],
 
         'staff_prodi' => [
@@ -76,6 +80,8 @@ return [
             'materials' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
             'submissions' => 'r,u',
+            'exams' => 'c,r,u,d',
+            'questions' => 'c,r,u,d',
         ],
         
         'siswa' => [        
@@ -84,6 +90,8 @@ return [
             'materials' => 'r',
             'assignments' => 'r',
             'submissions' => 'c,r,u,d',
+            'exams' => 'r',
+            'questions' => 'r',
         ],
     ],
 ];

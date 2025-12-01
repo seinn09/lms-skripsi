@@ -15,12 +15,14 @@ new class extends Component
     public Week $week;
     public Collection $materials;
     public Collection $assignments;
+    public Collection $exams;
 
     public ?Week $previousWeek = null;
     public ?Week $nextWeek = null;
 
     public ?int $materialToDelete = null;
     public ?int $assignmentToDelete = null;
+    public ?int $examToDelete = null;
 
     public function mount(Course $course, Week $week): void
     {
@@ -62,12 +64,13 @@ new class extends Component
     {
         $this->materials = $this->week->materials()->orderBy('title', 'asc')->get();
         $this->assignments = $this->week->assignments()->orderBy('title', 'asc')->get();
+        $this->exams = $this->week->exams()->orderBy('title', 'asc')->get();
     }
 
     #[Computed]
     public function items()
     {
-        return $this->materials->concat($this->assignments)->sortBy('title');
+        return $this->materials->concat($this->assignments)->concat($this->exams)->sortBy('title');
     }
 
     public function confirmDeleteMaterial(int $id): void
@@ -138,32 +141,73 @@ new class extends Component
         $this->loadItems();
     }
 
+    public function confirmDeleteExam(int $id): void
+    {
+        $this->examToDelete = $id;
+        $this->js("
+            Swal.fire({
+                title: 'Hapus ujian ini?',
+                text: 'Semua data nilai dan pengerjaan siswa akan hilang!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) { \$wire.destroyExam(); }
+            })
+        ");
+    }
+
+    public function destroyExam(): void
+    {
+        if ($this->examToDelete === null) return;
+        Exam::destroy($this->examToDelete);
+        $this->examToDelete = null;
+        session()->flash('notify', ['type' => 'success', 'message' => 'Ujian berhasil dihapus!']);
+        $this->loadItems();
+    }
+
     public function showCreateOptions(): void
     {
         $user = auth()->user();
         $canCreateMaterial = $user->isAbleTo('materials-create');
         $canCreateAssignment = $user->isAbleTo('assignments-create');
+        $canCreateExam = $user->hasRole(['pengajar', 'admin', 'superadministrator']);
+
         $materialUrl = $canCreateMaterial ? route('materials.create', ['week' => $this->week]) : null;
         $assignmentUrl = $canCreateAssignment ? route('assignments.create', ['week' => $this->week]) : null;
+        $examUrl = $canCreateExam ? route('exams.create', ['week' => $this->week]) : null;
 
         $js = "
             Swal.fire({
-                title: 'Tambah Apa?',
-                text: 'Pilih tipe item yang ingin Anda tambahkan:',
+                title: 'Tambah Aktivitas Belajar',
+                text: 'Pilih jenis konten yang ingin ditambahkan:',
                 icon: 'question',
+                
                 showConfirmButton: " . ($canCreateMaterial ? 'true' : 'false') . ",
                 confirmButtonText: 'Materi (File/Link)',
                 confirmButtonColor: '#3085d6',
+
                 showDenyButton: " . ($canCreateAssignment ? 'true' : 'false') . ",
                 denyButtonText: 'Tugas (Assignment)',
-                denyButtonColor: '#B22222',
-                showCancelButton: true,
-                cancelButtonText: 'Batal'
+                denyButtonColor: '#c7522fff',
+                
+                showCancelButton: " . ($canCreateExam ? 'true' : 'false') . ",
+                cancelButtonText: 'Ujian (Kuis)',
+                cancelButtonColor: '#00a96e',
+                
+                footer: '<a href=\"javascript:void(0)\" onclick=\"Swal.close()\" class=\"text-gray-500 hover:underline text-sm\">Batal / Tutup</a>',
+                
+                allowOutsideClick: false
+
             }).then((result) => {
                 if (result.isConfirmed) {
                     Livewire.navigate('$materialUrl'); 
                 } else if (result.isDenied) {
                     Livewire.navigate('$assignmentUrl');
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    Livewire.navigate('$examUrl');
                 }
             })
         ";
@@ -254,35 +298,56 @@ new class extends Component
                             <tbody>
                                 @forelse ($this->items as $item)
                                     <tr class="hover:bg-base-300">
-                                        <td>{{ $item->title }}</td>
+                                        <td class="font-medium">{{ $item->title }}</td>
                                         
                                         <td>
                                             @if ($item instanceof \App\Models\Assignment)
-                                                <span class="badge badge-error badge-sm">Tugas</span>
+                                                <span class="badge badge-error badge-sm text-white">Tugas</span>
+                                            
+                                            @elseif ($item instanceof \App\Models\Exam)
+                                                <span class="badge badge-warning badge-sm">Ujian</span>
+                                            
                                             @elseif ($item->file_path)
-                                                <span class="badge badge-info badge-sm">File</span>
+                                                <span class="badge badge-info badge-sm text-white">File</span>
                                             @elseif ($item->external_link)
-                                                <span class="badge badge-success badge-sm">Link</span>
+                                                <span class="badge badge-success badge-sm text-white">Link</span>
                                             @endif
                                         </td>
                                         
                                         <td class="flex gap-2">
+                                            
                                             @if ($item instanceof \App\Models\Assignment)
-                                                @permission('assignments-read')
-                                                    <a href="{{ route('assignments.show', $item) }}" class="btn btn-xs bg-blue-500 font-bold
-                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">Lihat Tugas</a>
+                                                @permission('assignments-read') <a href="{{ route('assignments.show', $item) }}" wire:navigate class="btn btn-xs btn-primary">Lihat Tugas</a>
                                                 @endpermission
                                                 @permission('assignments-update')
-                                                    <a href="{{ route('assignments.edit', $item) }}" class="btn btn-xs bg-yellow-500 font-bold
-                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-orange-500">Edit</a>
+                                                    <a href="{{ route('assignments.edit', $item) }}" wire:navigate class="btn btn-xs bg-yellow-500 font-bold
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">Edit</a>
                                                 @endpermission
                                                 @permission('assignments-delete')
                                                     <button class="btn btn-xs bg-red-500 font-bold text-xs px-2
-                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-rose-700"
-                                                            wire:click="confirmDeleteAssignment({{ $item->id }})">
-                                                        Delete
-                                                    </button>
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-rose-700" wire:click="confirmDeleteAssignment({{ $item->id }})">Delete</button>
                                                 @endpermission
+
+                                            @elseif ($item instanceof \App\Models\Exam)
+                                                @role('siswa')
+                                                    <a href="{{ route('exams.attempt', $item) }}" class="btn btn-xs bg-green-500 font-bold
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-green-600">Kerjakan</a>
+                                                @endrole
+
+                                                @role('superadministrator|admin|pengajar')
+                                                    <a href="{{ route('exams.questions', $item) }}" wire:navigate 
+                                                    class="btn btn-xs bg-blue-500 font-bold
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-600">
+                                                        Kelola Soal
+                                                    </a>
+
+                                                    <a href="{{ route('exams.edit', $item) }}" class="btn btn-xs bg-yellow-500 font-bold
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">Edit</a>
+
+                                                    <button class="btn btn-xs bg-red-500 font-bold text-xs px-2
+                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-rose-700" wire:click="confirmDeleteExam({{ $item->id }})">Delete</button>
+                                                @endrole
+
                                             @else
                                                 @if ($item->file_path)
                                                     <a href="{{ Storage::url($item->file_path) }}" 
@@ -292,8 +357,7 @@ new class extends Component
                                                         Download
                                                     </a>
                                                 @elseif ($item->external_link)
-                                                    <a href="{{ $item->external_link }}" target="_blank" class="btn btn-xs bg-blue-500 font-bold
-                                                    text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-700">Buka Link</a>
+                                                    <a href="{{ $item->external_link }}" target="_blank" class="btn btn-xs btn-info text-white">Buka Link</a>
                                                 @endif
                                                 
                                                 @permission('materials-update')
@@ -311,11 +375,14 @@ new class extends Component
                                                     </button>
                                                 @endpermission
                                             @endif
+
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="text-center font-bold">Belum ada materi atau tugas untuk pertemuan ini.</td>
+                                        <td colspan="3" class="text-center font-bold py-4 text-gray-500">
+                                            Belum ada aktivitas pembelajaran untuk pertemuan ini.
+                                        </td>
                                     </tr>
                                 @endforelse
                             </tbody>
