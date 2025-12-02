@@ -62,11 +62,6 @@ class User extends Authenticatable implements LaratrustUser
         return $this->hasMany(Course::class, 'user_id');
     }
 
-    public function enrolledClasses(): BelongsToMany
-    {
-        return $this->belongsToMany(CourseClass::class, 'course_student', 'user_id', 'course_class_id');
-    }
-
     public function taughtClasses(): HasMany
     {
         return $this->hasMany(CourseClass::class, 'user_id');
@@ -95,5 +90,12 @@ class User extends Authenticatable implements LaratrustUser
     public function examAttempts(): HasMany
     {
         return $this->hasMany(ExamAttempt::class, 'user_id');
+    }
+
+    public function enrolledClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(CourseClass::class, 'course_student', 'user_id', 'course_class_id')
+                    ->withPivot('final_score', 'final_grade', 'grade_point')
+                    ->withTimestamps();
     }
 }

@@ -37,7 +37,9 @@ class CourseClass extends Model
 
     public function students(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'course_student', 'course_class_id', 'user_id');
+        return $this->belongsToMany(User::class, 'course_student', 'course_class_id', 'user_id')
+                    ->withPivot('final_score', 'final_grade', 'grade_point')
+                    ->withTimestamps();
     }
 
     public function scopeSearch($query, $term)

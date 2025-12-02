@@ -22,6 +22,7 @@ class Course extends Model
         'course_code',
         'study_program_id',
         'name',
+        'sks',
         'description',
         'user_id',
     ];

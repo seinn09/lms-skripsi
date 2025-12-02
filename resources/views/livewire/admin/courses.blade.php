@@ -247,6 +247,14 @@ new class extends Component
                                                 </a>
                                             </div>
 
+                                            @permission('submissions-read')
+                                                <a href="{{ route('courses.gradebook', $course) }}" wire:navigate
+                                                   class="py-2 px-4 text-base rounded-md text-black bg-violet-400
+                                                transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-violet-500">
+                                                    Nilai
+                                                </a>
+                                            @endpermission
+
                                             <a href="{{ route('courses.detail', $course) }}" wire:navigate
                                                class="py-2 px-4 text-base rounded-md text-black bg-green-400
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-green-500">>

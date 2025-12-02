@@ -104,6 +104,23 @@ Volt::route('exams/{exam}/attempt', 'student.exam-index')
     ->middleware(['auth', 'verified', 'role:siswa'])
     ->name('exams.attempt');
 
+#ROUTE GRADEBOOK
+Volt::route('courses/{course}/gradebook', 'admin.gradebook.index')
+    ->middleware(['auth', 'verified', 'permission:submissions-read']) 
+    ->name('courses.gradebook');
+
+Volt::route('courses/{course}/my-grades', 'student.gradebook')
+    ->middleware(['auth', 'verified', 'role:siswa'])
+    ->name('courses.my-grades');
+
+Volt::route('my-transcripts', 'student.transkrip')
+    ->middleware(['auth', 'verified', 'role:siswa'])
+    ->name('student.transkrip');
+
+Volt::route('classes/{courseClass}/finalize', 'admin.gradebook.finalize')
+    ->middleware(['auth', 'verified', 'permission:submissions-update'])
+    ->name('classes.finalize');
+
 #ROUTE SUBMISSIONS
 Volt::route('assignments/{assignment}/submission', 'submission-edit')
     ->middleware(['auth', 'verified'])

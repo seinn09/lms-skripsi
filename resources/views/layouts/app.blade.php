@@ -123,6 +123,13 @@
                                 Ambil Mata Kuliah
                             </a>
                         </li>
+
+                        <li>
+                            <a href="{{ route('student.transkrip') }}" wire:navigate 
+                            @class(['active' => request()->routeIs('student.transkrip')])>
+                                Transkrip Nilai
+                            </a>
+                        </li>
                     @endrole
 
                     <div class="flex-grow"></div>
