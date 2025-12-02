@@ -142,6 +142,15 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->middleware(['permission:courses-update'])
         ->name('courses.edit');
 
+    #ROUTE MANAGE COURSE CLASS
+    Volt::route('courses/{course}/classes/create', 'admin.course-class.create')
+        ->middleware(['auth', 'verified', 'permission:course_classes-create'])
+        ->name('course-classes.create');
+    
+    Volt::route('classes/{courseClass}/edit', 'admin.course-class.edit')
+        ->middleware(['permission:course_classes-update'])
+        ->name('course-classes.edit');
+
     #ROUTE MANAGE DOSEN DAN MAHASISWA
     Volt::route('academic-users', 'admin.academic-users.index')
         ->middleware(['permission:pengajars-read|siswas-read']) 

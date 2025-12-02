@@ -21,6 +21,9 @@ class CourseClass extends Model
         'user_id',
         'class_code',
         'semester',
+        'day',
+        'time_start',
+        'time_end',
         'capacity',
         'status',
     ];

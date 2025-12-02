@@ -11,7 +11,9 @@ new class extends Component
     public Collection $classes;
     public ?CourseClass $selectedClass = null;
 
-   public function mount(Course $course): void
+    public ?int $classToDelete = null;
+
+    public function mount(Course $course): void
     {
         $this->course = $course->load(['owner']);
         
@@ -30,6 +32,36 @@ new class extends Component
     public function clearSelection(): void
     {
         $this->selectedClass = null;
+    }
+
+    public function confirmDeleteClass(int $id): void
+    {
+        $this->classToDelete = $id;
+        $this->js("
+            Swal.fire({
+                title: 'Hapus Kelas ini?',
+                text: 'Semua data pendaftaran siswa di kelas ini akan terhapus! Data nilai mungkin hilang.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) { \$wire.destroyClass(); }
+            })
+        ");
+    }
+
+    public function destroyClass(): void
+    {
+        if ($this->classToDelete) {
+            CourseClass::destroy($this->classToDelete);
+            $this->classToDelete = null;
+            
+            session()->flash('notify', ['type' => 'success', 'message' => 'Kelas berhasil dihapus.']);
+
+            $this->mount($this->course); 
+        }
     }
 
 }; ?>
@@ -118,18 +150,68 @@ new class extends Component
 
                 @else
 
-                    <h2 class="text-xl font-bold mb-4">Daftar Kelas yang Ditawarkan</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Daftar Kelas yang Ditawarkan</h2>
+                        
+                        @permission('course_classes-create')
+                            <a href="{{ route('admin.course-classes.create', $course) }}" wire:navigate 
+                               class="btn bg-blue-500 px-4 font-bold
+                                    text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-600">
+                                + Tambah Kelas
+                            </a>
+                        @endpermission
+                    </div>
+
                     <ul class="space-y-4">
                         @forelse ($classes as $class)
                             <li>
-                                <a wire:click.prevent="selectClass({{ $class->id }})" href="#"
-                                   class="block p-6 border rounded-lg shadow-sm hover:bg-gray-50 transition cursor-pointer">
-                                    <h3 class="text-lg font-semibold">{{ $class->class_code }} ({{ $class->semester }})</h3>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        Dosen: {{ $class->pengajar->name ?? 'N/A' }} | 
-                                        Kapasitas: {{ $class->students_count }} / {{ $class->capacity }}
-                                    </p>
-                                </a>
+                                <div class="block p-6 border rounded-lg shadow-sm hover:bg-gray-50 transition bg-white relative group">
+                                    
+                                    <a wire:click.prevent="selectClass({{ $class->id }})" href="#" class="block">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="text-lg font-semibold">{{ $class->class_code }} ({{ $class->semester }})</h3>
+                                                
+                                                <div class="flex items-center gap-2 text-sm text-gray-700 mt-1 font-medium">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    {{ $class->day ?? '-' }}, {{ substr($class->time_start ?? '', 0, 5) }} - {{ substr($class->time_end ?? '', 0, 5) }}
+                                                </div>
+
+                                                <p class="text-sm text-gray-600 mt-1">
+                                                    Dosen: {{ $class->pengajar->name ?? 'N/A' }} | 
+                                                    Kapasitas: {{ $class->students_count }} / {{ $class->capacity }}
+                                                </p>
+                                            </div>
+                                            
+                                            <div>
+                                                @if($class->status == 'open') <span class="badge badge-success">Dibuka</span>
+                                                @else <span class="badge badge-ghost">Ditutup</span> @endif
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    @if(auth()->user()->hasPermission(['course_classes-update', 'course_classes-delete']))
+                                        <div class="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            
+                                            @permission('course_classes-update')
+                                                <a href="{{ route('admin.course-classes.edit', $class) }}" wire:navigate 
+                                                   class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
+                                                    transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">
+                                                    Edit
+                                                </a>
+                                            @endpermission
+
+                                            @permission('course_classes-delete')
+                                                <button wire:click.stop="confirmDeleteClass({{ $class->id }})" 
+                                                        class="py-2 px-4 text-base rounded-md bg-red-500 text-white
+                                                        transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-600">
+                                                    Hapus
+                                                </button>
+                                            @endpermission
+                                        </div>
+                                    @endif
+
+                                </div>
                             </li>
                         @empty
                             <p class="text-center text-gray-500">Belum ada kelas yang ditawarkan untuk mata kuliah ini.</p>
