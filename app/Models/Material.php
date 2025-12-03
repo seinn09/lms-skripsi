@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\Tenantable;
 
 class Material extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     /**
      * The attributes that are mass assignable.

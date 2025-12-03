@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\Tenantable;
 
 class Week extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     /**
      * The attributes that are mass assignable.

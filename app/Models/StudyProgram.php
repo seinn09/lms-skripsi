@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Traits\Tenantable;
 
 class StudyProgram extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     protected $fillable = ['department_id', 'name', 'code', 'degree'];
 

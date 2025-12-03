@@ -14,13 +14,13 @@ return [
      * Struktur Roles dan Permissions
      */
     'roles_structure' => [
-        
+
         'superadministrator' => [
             'users' => 'c,r,u,d',
             'staff_prodis' => 'c,r,u,d',
             'pengajars' => 'c,r,u,d',
-            'siswas' => 'c,r,u,d', 
-            
+            'siswas' => 'c,r,u,d',
+
             // Master Data Organisasi
             'faculties' => 'c,r,u,d',
             'departments' => 'c,r,u,d',
@@ -36,6 +36,9 @@ return [
             'submissions' => 'c,r,u,d',
             'exams' => 'c,r,u,d',
             'questions' => 'c,r,u,d',
+
+            //tenant
+            'tenants' => 'c,r,u,d',
         ],
 
         'admin' => [
@@ -47,7 +50,7 @@ return [
             'faculties' => 'c,r,u,d',
             'departments' => 'c,r,u,d',
             'study_programs' => 'c,r,u,d',
-            
+
             'courses' => 'c,r,u,d',
             'course_classes' => 'c,r,u,d',
             'weeks' => 'c,r,u,d',
@@ -63,14 +66,14 @@ return [
             'users' => 'c,r,u,d',
             'pengajars' => 'c,r,u,d',
             'siswas' => 'c,r,u,d',
-            
+
             // Akademik (Di lingkup prodinya)
             'courses' => 'c,r,u,d',
-            'course_classes' => 'c,r,u,d', 
-            'weeks' => 'c,r,u,d', 
+            'course_classes' => 'c,r,u,d',
+            'weeks' => 'c,r,u,d',
             'materials' => 'c,r,u,d',
             'assignments' => 'c,r,u,d',
-            'submissions' => 'r', 
+            'submissions' => 'r',
         ],
 
         'pengajar' => [
@@ -83,8 +86,8 @@ return [
             'exams' => 'c,r,u,d',
             'questions' => 'c,r,u,d',
         ],
-        
-        'siswa' => [        
+
+        'siswa' => [
             'course_classes' => 'r',
             'weeks' => 'r',
             'materials' => 'r',

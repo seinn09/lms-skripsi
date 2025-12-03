@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\Tenantable;
 
 class CourseClass extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     protected $table = 'course_classes';
 
@@ -41,6 +42,7 @@ class CourseClass extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'course_student', 'course_class_id', 'user_id')
+                    ->using(CourseStudent::class)
                     ->withPivot('final_score', 'final_grade', 'grade_point')
                     ->withTimestamps();
     }

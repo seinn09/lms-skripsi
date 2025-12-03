@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\Tenantable;
 
 class Question extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     protected $fillable = [
         'course_id',
@@ -31,7 +32,8 @@ class Question extends Model
 
     public function exams(): BelongsToMany
     {
-        return $this->belongsToMany(Exam::class, 'exam_questions', 'question_id', 'exam_id');
+        return $this->belongsToMany(Exam::class, 'exam_questions', 'question_id', 'exam_id')
+                    ->using(ExamQuestion::class);
     }
 
     public function scopeSearch($query, $term)

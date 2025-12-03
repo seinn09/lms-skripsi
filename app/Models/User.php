@@ -55,7 +55,7 @@ class User extends Authenticatable implements LaratrustUser
         'password' => 'hashed',
     ];
 
-    
+
 
     public function coursesAsPengajar(): HasMany
     {
@@ -95,6 +95,7 @@ class User extends Authenticatable implements LaratrustUser
     public function enrolledClasses(): BelongsToMany
     {
         return $this->belongsToMany(CourseClass::class, 'course_student', 'user_id', 'course_class_id')
+                    ->using(CourseStudent::class)
                     ->withPivot('final_score', 'final_grade', 'grade_point')
                     ->withTimestamps();
     }

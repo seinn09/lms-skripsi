@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\Tenantable;
 
 class Exam extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     protected $fillable = [
         'week_id',
@@ -34,6 +35,7 @@ class Exam extends Model
     public function questions(): BelongsToMany
     {
         return $this->belongsToMany(Question::class, 'exam_questions', 'exam_id', 'question_id')
+                    ->using(ExamQuestion::class)
                     ->withPivot('order')
                     ->orderByPivot('order');
     }

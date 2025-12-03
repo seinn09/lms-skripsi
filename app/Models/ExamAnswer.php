@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Tenantable;
 
 class ExamAnswer extends Model
 {
-    use HasFactory;
+    use HasFactory, Tenantable;
 
     protected $fillable = [
         'exam_attempt_id',
@@ -32,7 +33,7 @@ class ExamAnswer extends Model
     {
         return $this->belongsTo(Question::class, 'question_id');
     }
-    
+
     public function selectedOption(): BelongsTo
     {
         return $this->belongsTo(Option::class, 'selected_option_id');
