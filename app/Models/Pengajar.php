@@ -17,6 +17,10 @@ class Pengajar extends Model
      */
     protected $fillable = ['user_id', 'study_program_id', 'nip', 'alamat', 'tanggal_lahir'];
 
+    protected $casts = [
+        'tanggal_lahir' => 'date',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
@@ -12,13 +11,39 @@ new class extends Component
     public string $name = '';
     public string $email = '';
 
+    public string $nip = '';
+    public string $nim = '';
+    public string $alamat = '';
+    public ?string $tanggal_lahir = null;
+    
+    public string $academic_info = ''; 
+
     /**
      * Mount the component.
      */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $user = Auth::user();
+
+        $this->name = $user->name;
+        $this->email = $user->email;
+
+        if ($user->hasRole('pengajar') && $user->pengajar) {
+            $this->nip = $user->pengajar->nip ?? '';
+            $this->alamat = $user->pengajar->alamat ?? '';
+            $this->tanggal_lahir = $user->pengajar->tanggal_lahir ? $user->pengajar->tanggal_lahir->format('Y-m-d') : null;
+            $this->academic_info = $user->pengajar->studyProgram->name ?? '-';
+        } 
+        elseif ($user->hasRole('siswa') && $user->siswa) {
+            $this->nim = $user->siswa->nim ?? '';
+            $this->alamat = $user->siswa->alamat ?? '';
+            $this->tanggal_lahir = $user->siswa->tanggal_lahir ? $user->siswa->tanggal_lahir->format('Y-m-d') : null;
+            $this->academic_info = $user->siswa->studyProgram->name ?? '-';
+        } 
+        elseif ($user->hasRole('staff_prodi') && $user->staffProdi) {
+            $this->nip = $user->staffProdi->nip ?? '';
+            $this->academic_info = $user->staffProdi->studyProgram->name ?? '-';
+        }
     }
 
     /**
@@ -32,6 +57,41 @@ new class extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
         ]);
+        if ($user->hasRole('pengajar')) {
+            $this->validate([
+                'nip' => ['required', 'string', Rule::unique('pengajars')->ignore($user->pengajar->id ?? null)],
+                'alamat' => ['nullable', 'string'],
+                'tanggal_lahir' => ['nullable', 'date'],
+            ]);
+
+            $user->pengajar()->update([
+                'nip' => $this->nip,
+                'alamat' => $this->alamat,
+                'tanggal_lahir' => $this->tanggal_lahir,
+            ]);
+        } 
+        elseif ($user->hasRole('siswa')) {
+            $this->validate([
+                'nim' => ['required', 'string', Rule::unique('siswas')->ignore($user->siswa->id ?? null)],
+                'alamat' => ['nullable', 'string'],
+                'tanggal_lahir' => ['nullable', 'date'],
+            ]);
+
+            $user->siswa()->update([
+                'nim' => $this->nim,
+                'alamat' => $this->alamat,
+                'tanggal_lahir' => $this->tanggal_lahir,
+            ]);
+        }
+        elseif ($user->hasRole('staff_prodi')) {
+            $this->validate([
+                'nip' => ['required', 'string', Rule::unique('staff_prodis')->ignore($user->staffProdi->id ?? null)],
+            ]);
+            
+            $user->staffProdi()->update([
+                'nip' => $this->nip,
+            ]);
+        }
 
         $user->fill($validated);
 
@@ -52,8 +112,7 @@ new class extends Component
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: RouteServiceProvider::HOME);
-
+            $this->redirectIntended(default: route('dashboard', absolute: false));
             return;
         }
 
@@ -75,6 +134,7 @@ new class extends Component
     </header>
 
     <form wire:submit="updateProfileInformation" class="mt-6 space-y-6">
+        
         <div>
             <x-input-label for="name" :value="__('Name')" />
             <x-text-input wire:model="name" id="name" name="name" type="text" class="mt-1 block w-full" required autofocus autocomplete="name" />
@@ -104,6 +164,62 @@ new class extends Component
                 </div>
             @endif
         </div>
+
+        @if(auth()->user()->hasRole(['pengajar', 'siswa', 'staff_prodi']))
+            <div class="p-4 bg-gray-50 border rounded-lg space-y-4">
+                <h3 class="font-bold text-gray-700">Data Akademik</h3>
+
+                <div>
+                    <x-input-label :value="__('Unit Akademik (Prodi/Jurusan)')" />
+                    <x-text-input :value="$academic_info" type="text" class="mt-1 block w-full bg-gray-200 text-gray-500 cursor-not-allowed" disabled />
+                    <p class="text-xs text-gray-500 mt-1">Hubungi admin jika ingin mengubah unit akademik.</p>
+                </div>
+
+                @if(auth()->user()->hasRole(['pengajar', 'staff_prodi']))
+                    <div>
+                        <x-input-label for="nip" :value="__('NIP (Nomor Induk Pegawai)')" />
+                        
+                        <x-text-input wire:model="nip" id="nip" type="text" class="mt-1 block w-full" 
+                                      @disabled(!auth()->user()->hasRole(['superadministrator', 'admin'])) />
+                        
+                        <x-input-error class="mt-2" :messages="$errors->get('nip')" />
+                        
+                        @if(!auth()->user()->hasRole(['superadministrator', 'admin']))
+                            <p class="text-xs text-gray-500 mt-1">Hubungi admin untuk memperbarui NIP.</p>
+                        @endif
+                    </div>
+                @endif
+
+                @role('siswa')
+                    <div>
+                        <x-input-label for="nim" :value="__('NIM (Nomor Induk Mahasiswa)')" />
+                        
+                        <x-text-input wire:model="nim" id="nim" type="text" class="mt-1 block w-full" 
+                                      @disabled(!auth()->user()->hasRole(['superadministrator', 'admin'])) />
+                        
+                        <x-input-error class="mt-2" :messages="$errors->get('nim')" />
+
+                        @if(!auth()->user()->hasRole(['superadministrator', 'admin']))
+                            <p class="text-xs text-gray-500 mt-1">Hubungi admin untuk memperbarui NIM.</p>
+                        @endif
+                    </div>
+                @endrole
+
+                @if(auth()->user()->hasRole(['pengajar', 'siswa']))
+                    <div>
+                        <x-input-label for="alamat" :value="__('Alamat Domisili')" />
+                        <textarea wire:model="alamat" id="alamat" class="textarea textarea-bordered w-full mt-1 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"></textarea>
+                        <x-input-error class="mt-2" :messages="$errors->get('alamat')" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="tanggal_lahir" :value="__('Tanggal Lahir')" />
+                        <x-text-input wire:model="tanggal_lahir" id="tanggal_lahir" type="date" class="mt-1 block w-full" />
+                        <x-input-error class="mt-2" :messages="$errors->get('tanggal_lahir')" />
+                    </div>
+                @endif
+            </div>
+        @endif
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
