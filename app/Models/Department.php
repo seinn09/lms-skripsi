@@ -12,7 +12,7 @@ class Department extends Model
 {
     use HasFactory, Tenantable;
 
-    protected $fillable = ['faculty_id', 'name', 'code'];
+    protected $fillable = ['faculty_id', 'name', 'code', 'tenant_id'];
 
     public function faculty(): BelongsTo
     {
@@ -24,8 +24,5 @@ class Department extends Model
         return $this->hasMany(StudyProgram::class, 'department_id');
     }
 
-    public function pengajars(): HasMany
-    {
-        return $this->hasMany(Pengajar::class, 'department_id');
-    }
+
 }

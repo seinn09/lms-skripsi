@@ -16,7 +16,7 @@ class Siswa extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = ['user_id', 'study_program_id', 'nim', 'alamat', 'tanggal_lahir'];
+    protected $fillable = ['user_id', 'study_program_id', 'nim', 'alamat', 'tanggal_lahir', 'tenant_id'];
 
     protected $casts = [
         'tanggal_lahir' => 'date',

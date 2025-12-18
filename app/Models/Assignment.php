@@ -20,6 +20,7 @@ class Assignment extends Model
         'title',
         'description',
         'deadline',
+        'tenant_id',
     ];
 
     protected $casts = [

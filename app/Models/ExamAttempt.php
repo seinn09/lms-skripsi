@@ -19,6 +19,7 @@ class ExamAttempt extends Model
         'finished_at',
         'total_score',
         'status', // in_progress, completed
+        'tenant_id',
     ];
 
     protected $casts = [

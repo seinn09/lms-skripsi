@@ -39,6 +39,9 @@ return [
 
             //tenant
             'tenants' => 'c,r,u,d',
+
+            // Admin Management
+            'admins' => 'c,r,u,d',
         ],
 
         'admin' => [

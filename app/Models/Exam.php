@@ -20,6 +20,7 @@ class Exam extends Model
         'duration_minutes',
         'start_time',
         'end_time',
+        'tenant_id',
     ];
 
     protected $casts = [

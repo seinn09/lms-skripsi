@@ -13,7 +13,7 @@ class StudyProgram extends Model
 {
     use HasFactory, Tenantable;
 
-    protected $fillable = ['department_id', 'name', 'code', 'degree'];
+    protected $fillable = ['department_id', 'name', 'code', 'degree', 'tenant_id'];
 
     public function department(): BelongsTo
     {

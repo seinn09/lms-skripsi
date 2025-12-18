@@ -18,10 +18,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Traits\Tenantable;
 
 class User extends Authenticatable implements LaratrustUser
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions;
+    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions, Tenantable;
 
     /**
      * The attributes that are mass assignable.
@@ -29,6 +30,7 @@ class User extends Authenticatable implements LaratrustUser
      * @var array<int, string>
      */
     protected $fillable = [
+        'tenant_id',
         'name',
         'email',
         'password',

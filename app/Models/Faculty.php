@@ -11,7 +11,7 @@ class Faculty extends Model
 {
     use HasFactory, Tenantable;
 
-    protected $fillable = ['name', 'code'];
+    protected $fillable = ['name', 'code', 'tenant_id'];
 
     public function departments(): HasMany
     {

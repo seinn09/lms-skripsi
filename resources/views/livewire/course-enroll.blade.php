@@ -26,10 +26,16 @@ new class extends Component
             ->where('status', 'open')
             ->whereNotIn('id', $enrolledClassIds);
 
-        // Filter by student's study program
+        // Filter by student's study program and tenant
         if ($user->siswa && $user->siswa->study_program_id) {
             $query->whereHas('course', function ($q) use ($user) {
-                $q->where('study_program_id', $user->siswa->study_program_id);
+                $q->where('study_program_id', $user->siswa->study_program_id)
+                  ->where('tenant_id', $user->tenant_id);
+            });
+        } else {
+            // If not a student, still filter by tenant
+            $query->whereHas('course', function ($q) use ($user) {
+                $q->where('tenant_id', $user->tenant_id);
             });
         }
 
@@ -39,7 +45,7 @@ new class extends Component
     public function confirmEnroll(int $classId): void
     {
         $this->classToEnroll = $classId;
-        
+
         $this->js("
             Swal.fire({
                 title: 'Ambil Kelas Ini?',
@@ -67,6 +73,25 @@ new class extends Component
 
         $user = Auth::user();
         $courseClass = CourseClass::with('course')->find($this->classToEnroll);
+
+        if (!$courseClass) {
+            session()->flash('notify', [
+                'type' => 'error',
+                'message' => 'Kelas tidak ditemukan!'
+            ]);
+            $this->classToEnroll = null;
+            return;
+        }
+
+        // Validate tenant
+        if ($courseClass->course->tenant_id !== $user->tenant_id) {
+            session()->flash('notify', [
+                'type' => 'error',
+                'message' => 'Anda tidak dapat mendaftar di mata kuliah dari kampus lain!'
+            ]);
+            $this->classToEnroll = null;
+            return;
+        }
 
         // Validate that the course belongs to the student's study program
         if ($user->siswa && $courseClass) {
@@ -111,7 +136,7 @@ new class extends Component
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 @forelse ($availableClasses as $class)
-                    <div class="card bg-primary text-primary-content shadow-xl w-full 
+                    <div class="card bg-primary text-primary-content shadow-xl w-full
                                     group transition-all duration-500">
                         <div class="card-body">
                             <h2 class="card-title font-bold text-xl">{{ $class->course->name}}</h2>
@@ -120,11 +145,11 @@ new class extends Component
                             <p class="text-sm text-white mb-2">
                                 Dosen Pengampu: {{ $class->pengajar->name ?? 'N/A' }}
                             </p>
-                           
+
                             <p class="line-clamp-2 group-hover:line-clamp-none">
                                     {{ $class->course->description }}
                             </p>
-                            
+
                             <div class="card-actions justify-end">
                                 <button class="btn px-2 py-2 text-black bg-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-gray-300"
                                         wire:click="confirmEnroll({{ $class->id }})"
@@ -142,7 +167,7 @@ new class extends Component
                     </div>
                 @endforelse
 
-            </div> 
+            </div>
         </div>
     </div>
 </div>

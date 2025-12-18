@@ -20,12 +20,21 @@ class UserSeeder extends Seeder
 
         $this->command->info('Membuat 9 Akun Pengguna...');
 
+        // Simpan tenant_id saat ini untuk direstore nanti
+        $currentTenantId = session('tenant_id');
+
+        // Hapus tenant_id dari session agar superadmin tidak punya tenant
+        session()->forget('tenant_id');
+
         User::factory()->superAdministrator()->create([
             'name' => 'Superadministrator',
             'email' => 'superadministrator@app.com',
             'password' => bcrypt('password'),
         ]);
-        
+
+        // Restore tenant_id untuk user lainnya
+        session(['tenant_id' => $currentTenantId]);
+
         #AKUN UNTUK ADMIN
         User::factory()->admin()->create([
             'name' => 'Admin 1',
@@ -40,13 +49,13 @@ class UserSeeder extends Seeder
 
         #AKUN UNTUK STAFF PRODI
         User::factory()->staffProdi()->create([
-            'name' => 'Staff TI', 
-            'email' => 'staff_ti@app.com', 
+            'name' => 'Staff TI',
+            'email' => 'staff_ti@app.com',
             'password' => bcrypt('password'),
         ]);
         User::factory()->staffProdi()->create([
-            'name' => 'Staff Elektro', 
-            'email' => 'staff_te@app.com', 
+            'name' => 'Staff Elektro',
+            'email' => 'staff_te@app.com',
             'password' => bcrypt('password'),
         ]);
 
@@ -84,14 +93,14 @@ class UserSeeder extends Seeder
 
         DB::table('role_user')->truncate();
         DB::table('permission_user')->truncate();
-        
+
         DB::table('pengajars')->truncate();
         DB::table('siswas')->truncate();
         DB::table('staff_prodis')->truncate();
-        
-        $usersTable = (new User)->getTable(); 
+
+        $usersTable = (new User)->getTable();
         DB::table($usersTable)->truncate();
-        
+
         Schema::enableForeignKeyConstraints();
         $this->command->info('User tables truncated.');
     }

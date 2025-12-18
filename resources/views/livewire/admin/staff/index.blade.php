@@ -3,25 +3,37 @@
 use Livewire\Volt\Component;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use App\Traits\Livewire\WithTenantFilter;
 
 new class extends Component
 {
+    use WithTenantFilter;
+
     public Collection $staffs;
     public ?int $idToDelete = null;
 
     public function mount(): void
+    {
+        $this->loadTenantFilter();
+        $this->loadStaffs();
+    }
+
+    public function updatedSelectedTenant(): void
     {
         $this->loadStaffs();
     }
 
     public function loadStaffs(): void
     {
-        $this->staffs = User::whereHas('roles', function ($q) {
+        $query = User::whereHas('roles', function ($q) {
             $q->where('name', 'staff_prodi');
         })
         ->with(['staffProdi.studyProgram'])
-        ->orderBy('created_at', 'desc')
-        ->get();
+        ->orderBy('created_at', 'desc');
+
+        $this->applyTenantFilter($query);
+
+        $this->staffs = $query->get();
     }
 
     public function confirmDelete(int $id): void
@@ -65,13 +77,15 @@ new class extends Component
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <x-filter-tenant :tenants="$tenants_filter_list" wire:model.live="selectedTenant" />
+
                 <div class="p-6 text-gray-900">
-                    
+
                     <div class="flex justify-between items-center mb-4">
                         <h1 class="text-xl font-bold">Daftar Admin Program Studi</h1>
 
                         @permission('staff_prodis-create')
-                            <a href="{{ route('admin.staff.create') }}" wire:navigate 
+                            <a href="{{ route('admin.staff.create') }}" wire:navigate
                                class="btn btn-primary btn-sm text-white">
                                 + Tambah Staff Baru
                             </a>
@@ -85,7 +99,7 @@ new class extends Component
                                     <th>Nama Staff</th>
                                     <th>Email</th>
                                     <th>NIP</th>
-                                    <th>Prodi yang di Ampu</th> 
+                                    <th>Prodi yang di Ampu</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -116,7 +130,7 @@ new class extends Component
                                         </td> --}}
                                         <td class="flex gap-2">
                                             @permission('staff_prodis-update')
-                                                <a href="{{ route('admin.staff.edit', $staff) }}" wire:navigate 
+                                                <a href="{{ route('admin.staff.edit', $staff) }}" wire:navigate
                                                     class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
                                                     transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">
                                                     Edit

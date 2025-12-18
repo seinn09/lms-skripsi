@@ -1,17 +1,18 @@
 <?php
 
 use Livewire\Volt\Component;
-use Livewire\Attributes\Url; // Agar tab tersimpan di URL
+use Livewire\Attributes\Url;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
+use App\Traits\Livewire\WithTenantFilter;
 
 new class extends Component
 {
+    use WithTenantFilter;
+
     #[Url]
     public string $tab = 'dosen';
 
-    public Collection $users;
+    public array $users = [];
     public ?int $idToDelete = null;
 
     public function mount(): void
@@ -19,7 +20,14 @@ new class extends Component
         if (!in_array($this->tab, ['dosen', 'mahasiswa'])) {
             $this->tab = 'dosen';
         }
-        
+
+        $this->loadTenantFilter();
+
+        $this->loadUsers();
+    }
+
+    public function updatedSelectedTenant()
+    {
         $this->loadUsers();
     }
 
@@ -33,26 +41,29 @@ new class extends Component
         $currentUser = Auth::user();
         $query = User::query();
 
+        $this->applyTenantFilter($query);
+
         if ($this->tab === 'dosen') {
             $query->whereHas('roles', fn($q) => $q->where('name', 'pengajar'))
-                  ->with('pengajar.studyProgram');
+                  ->with(['pengajar.studyProgram', 'tenant', 'roles', 'permissions']);
 
-            if ($currentUser->hasRole('staff_prodi')) {
+            if ($currentUser->hasRole('staff_prodi') && $currentUser->staffProdi) {
                 $prodiId = $currentUser->staffProdi->study_program_id;
+
                 $query->whereHas('pengajar', fn($q) => $q->where('study_program_id', $prodiId));
             }
 
         } else {
             $query->whereHas('roles', fn($q) => $q->where('name', 'siswa'))
-                  ->with('siswa.studyProgram');
+                  ->with(['siswa.studyProgram', 'tenant', 'roles', 'permissions']);
 
-            if ($currentUser->hasRole('staff_prodi')) {
+            if ($currentUser->hasRole('staff_prodi') && $currentUser->staffProdi) {
                 $prodiId = $currentUser->staffProdi->study_program_id;
                 $query->whereHas('siswa', fn($q) => $q->where('study_program_id', $prodiId));
             }
         }
 
-        $this->users = $query->orderBy('created_at', 'desc')->get();
+        $this->users = $query->orderBy('created_at', 'desc')->get()->all();
     }
 
     public function confirmDelete(int $id): void
@@ -95,17 +106,20 @@ new class extends Component
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+
+                <x-filter-tenant :tenants="$tenants_filter_list" wire:model.live="selectedTenant" />
+
                 <div class="p-6 text-gray-900">
-                    
-                    <div class="flex flex-row md:flex-row justify-between items-center mb-6 gap-4">
-                        
+
+                    <div class="flex flex-row md:flex-row justify-between items-center mb-1 gap-4">
+
                         <div role="tablist" class="tabs tabs-boxed">
-                            <a role="tab" 
+                            <a role="tab"
                                class="tab {{ $tab === 'dosen' ? 'tab-active' : '' }}"
                                wire:click="$set('tab', 'dosen')">
                                Data Dosen
                             </a>
-                            <a role="tab" 
+                            <a role="tab"
                                class="tab {{ $tab === 'mahasiswa' ? 'tab-active' : '' }}"
                                wire:click="$set('tab', 'mahasiswa')">
                                Data Mahasiswa
@@ -150,22 +164,30 @@ new class extends Component
                                                         {{ $user->pengajar->studyProgram->name ?? 'Prodi tidak set' }}
                                                     </span>
                                                 </div>
-                                            @else
+                                            @elseif ($tab === 'mahasiswa')
                                                 <div class="flex flex-col">
                                                     <span class="font-semibold">{{ $user->siswa->nim ?? '-' }}</span>
                                                     <span class="text-xs text-gray-500">
                                                         {{ $user->siswa->studyProgram->name ?? 'Prodi tidak set' }}
                                                     </span>
                                                 </div>
+                                            @else
+                                                <div class="flex flex-col">
+                                                    <span class="font-semibold">{{ $user->staffProdi->nip ?? '-' }}</span>
+                                                    <span class="text-xs text-gray-500">
+                                                        {{ $user->staffProdi->studyProgram->name ?? 'Prodi tidak set' }}
+                                                    </span>
+                                                </div>
                                             @endif
                                         </td>
                                         <td class="flex gap-2">
-                                            @if (($tab === 'dosen' && auth()->user()->isAbleTo('pengajars-delete')) || 
-                                                 ($tab === 'mahasiswa' && auth()->user()->isAbleTo('siswas-delete')))
-                                                
+                                            @if (($tab === 'dosen' && auth()->user()->isAbleTo('pengajars-delete')) ||
+                                                 ($tab === 'mahasiswa' && auth()->user()->isAbleTo('siswas-delete')) ||
+                                                 ($tab === 'staff_prodi' && auth()->user()->isAbleTo('staff_prodis-delete')))
+
                                                 <a href="{{ route('admin.academic.users.edit', $user) }}" class="py-2 px-4 text-base rounded-md bg-yellow-400 text-black
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-500">Edit</a>
-                                                
+
                                                 <button class="py-2 px-4 text-base rounded-md bg-red-600 text-black
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-700"
                                                         wire:click="confirmDelete({{ $user->id }})">

@@ -27,6 +27,7 @@ class CourseClass extends Model
         'time_end',
         'capacity',
         'status',
+        'tenant_id',
     ];
 
     public function course(): BelongsTo

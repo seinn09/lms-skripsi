@@ -16,7 +16,7 @@ class Pengajar extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = ['user_id', 'study_program_id', 'nip', 'alamat', 'tanggal_lahir'];
+    protected $fillable = ['user_id', 'study_program_id', 'nip', 'alamat', 'tanggal_lahir', 'tenant_id'];
 
     protected $casts = [
         'tanggal_lahir' => 'date',

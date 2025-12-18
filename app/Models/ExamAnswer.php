@@ -18,6 +18,7 @@ class ExamAnswer extends Model
         'answer_text',
         'is_correct',
         'score_obtained',
+        'tenant_id',
     ];
 
     protected $casts = [

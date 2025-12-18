@@ -30,12 +30,36 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        $credentials = ['password' => $this->password];
+
+        if (filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            $credentials['email'] = $this->email;
+        } else {
+            $user = User::query()
+                ->whereHas('pengajar', fn($q) => $q->where('nip', $this->email))
+                ->orWhereHas('siswa', fn($q) => $q->where('nim', $this->email))
+                ->orWhereHas('staffProdi', fn($q) => $q->where('nip', $this->email))
+                ->first();
+
+            if ($user) {
+                $credentials['email'] = $user->email;
+            } else {
+                $credentials['email'] = $this->email;
+            }
+        }
+
+        if (! Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
             ]);
+        }
+
+        $user = Auth::user();
+
+        if ($user->tenant_id) {
+            session(['tenant_id' => $user->tenant_id]);
         }
 
         RateLimiter::clear($this->throttleKey());

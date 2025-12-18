@@ -15,6 +15,7 @@ class Option extends Model
         'question_id',
         'option_text',
         'is_correct',
+        'tenant_id',
     ];
 
     protected $casts = [

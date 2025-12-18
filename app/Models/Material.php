@@ -23,6 +23,7 @@ class Material extends Model
         'title',
         'file_path',
         'external_link',
+        'tenant_id',
     ];
 
     public function week(): BelongsTo

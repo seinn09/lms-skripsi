@@ -26,6 +26,7 @@ class Course extends Model
         'sks',
         'description',
         'user_id',
+        'tenant_id',
     ];
 
     public function owner(): BelongsTo

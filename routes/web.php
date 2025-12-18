@@ -70,7 +70,7 @@ Volt::route('assignments/{assignment}', 'assignment-show')
 
 #ROUTE EXAMS
 Volt::route('courses/week/{week}/exams/create', 'admin.exam-create')
-    ->middleware(['auth', 'verified', 'permission:exams-create']) 
+    ->middleware(['auth', 'verified', 'permission:exams-create'])
     ->name('exams.create');
 
 Volt::route('exams/{exam}/edit', 'admin.exam-edit')
@@ -106,7 +106,7 @@ Volt::route('exams/{exam}/attempt', 'student.exam-index')
 
 #ROUTE GRADEBOOK
 Volt::route('courses/{course}/gradebook', 'admin.gradebook.index')
-    ->middleware(['auth', 'verified', 'permission:submissions-read']) 
+    ->middleware(['auth', 'verified', 'permission:submissions-read'])
     ->name('courses.gradebook');
 
 Volt::route('courses/{course}/my-grades', 'student.gradebook')
@@ -114,7 +114,7 @@ Volt::route('courses/{course}/my-grades', 'student.gradebook')
     ->name('courses.my-grades');
 
 Volt::route('my-transcripts', 'student.transkrip')
-    ->middleware(['auth', 'verified', 'role:siswa'])
+    ->middleware(['auth', 'verified', 'role:siswa|superadministrator'])
     ->name('student.transkrip');
 
 Volt::route('classes/{courseClass}/finalize', 'admin.gradebook.finalize')
@@ -130,12 +130,12 @@ Volt::route('assignments/{assignment}/submission', 'submission-edit')
 Volt::route('enroll-courses', 'course-enroll')
     ->middleware(['auth', 'verified', 'role:siswa|superadministrator|admin'])
     ->name('courses.enroll.index');
-    
+
 Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(function () {
 
     #ROUTE MANAGE COURSEs
-    Volt::route('courses/create', 'admin.coursecreate') 
-        ->middleware(['permission:courses-create']) 
+    Volt::route('courses/create', 'admin.coursecreate')
+        ->middleware(['permission:courses-create'])
         ->name('courses.create');
 
     Volt::route('courses/{course}/edit', 'admin.courseedit')
@@ -146,22 +146,22 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
     Volt::route('courses/{course}/classes/create', 'admin.course-class.create')
         ->middleware(['auth', 'verified', 'permission:course_classes-create'])
         ->name('course-classes.create');
-    
+
     Volt::route('classes/{courseClass}/edit', 'admin.course-class.edit')
         ->middleware(['permission:course_classes-update'])
         ->name('course-classes.edit');
 
     #ROUTE MANAGE DOSEN DAN MAHASISWA
     Volt::route('academic-users', 'admin.academic-users.index')
-        ->middleware(['permission:pengajars-read|siswas-read']) 
+        ->middleware(['permission:pengajars-read|siswas-read'])
         ->name('academic.users.index');
 
     Volt::route('academic-users/create', 'admin.academic-users.create')
-            ->middleware(['permission:pengajars-create|siswas-create']) 
-            ->name('academic.users.create');   
-            
+            ->middleware(['permission:pengajars-create|siswas-create'])
+            ->name('academic.users.create');
+
     Volt::route('academic-users/{user}/edit', 'admin.academic-users.edit')
-            ->middleware(['permission:pengajars-update|siswas-update']) 
+            ->middleware(['permission:pengajars-update|siswas-update'])
             ->name('academic.users.edit');
 
     #ROUTE MANAGE STAFF
@@ -177,6 +177,59 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
         ->middleware(['permission:staff_prodis-update'])
         ->name('staff.edit');
 
+    #ROUTE MANAGE ADMINS (SUPERADMINISTRATOR ONLY)
+    Volt::route('admins', 'admin.admins.index')
+        ->middleware(['permission:admins-read'])
+        ->name('admins.index');
+
+    Volt::route('admins/create', 'admin.admins.create')
+        ->middleware(['permission:admins-create'])
+        ->name('admins.create');
+
+    Volt::route('admins/{user}/edit', 'admin.admins.edit')
+        ->middleware(['permission:admins-update'])
+        ->name('admins.edit');
+
+
+    #ROUTE MANAGE FACULTIES (SUPERADMIN & ADMIN)
+    Volt::route('faculties', 'admin.faculties.index')
+        ->middleware(['permission:faculties-read'])
+        ->name('faculties.index');
+
+    Volt::route('faculties/create', 'admin.faculties.create')
+        ->middleware(['permission:faculties-create'])
+        ->name('faculties.create');
+
+    Volt::route('faculties/{faculty}/edit', 'admin.faculties.edit')
+        ->middleware(['permission:faculties-update'])
+        ->name('faculties.edit');
+
+    #ROUTE MANAGE DEPARTMENTS (SUPERADMIN & ADMIN)
+    Volt::route('departments', 'admin.departments.index')
+        ->middleware(['permission:departments-read'])
+        ->name('departments.index');
+
+    Volt::route('departments/create', 'admin.departments.create')
+        ->middleware(['permission:departments-create'])
+        ->name('departments.create');
+
+    Volt::route('departments/{department}/edit', 'admin.departments.edit')
+        ->middleware(['permission:departments-update'])
+        ->name('departments.edit');
+
+    #ROUTE MANAGE STUDY PROGRAMS (SUPERADMIN & ADMIN)
+    Volt::route('study-programs', 'admin.study-programs.index')
+        ->middleware(['permission:study_programs-read'])
+        ->name('study-programs.index');
+
+    Volt::route('study-programs/create', 'admin.study-programs.create')
+        ->middleware(['permission:study_programs-create'])
+        ->name('study-programs.create');
+
+    Volt::route('study-programs/{studyProgram}/edit', 'admin.study-programs.edit')
+        ->middleware(['permission:study_programs-update'])
+        ->name('study-programs.edit');
+
     #ROUTE UNTUK ASSIGNMENT SUBMISSIONS MANAGEMENT
     Volt::route('assignments/{assignment}/class/{class}/grading', 'admin.assignment-class-grades')
         ->middleware(['auth', 'verified', 'permission:submissions-update'])
@@ -188,8 +241,19 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->name('admin.')->group(
 
     #ROUTE UNTUK ENROLL
     Volt::route('enrollment', 'admin.enrollment')
-        ->middleware(['permission:manage_enrollment_status-create']) 
+        ->middleware(['permission:manage_enrollment_status-create'])
         ->name('enrollment.index');
+
+});
+
+Route::prefix('superadmin')
+    ->middleware(['auth', 'verified', 'role:superadministrator'])
+    ->name('superadmin.')
+    ->group(function () {
+
+        Volt::route('tenants', 'superadmin.tenant.index')->name('tenants.index');
+        Volt::route('tenants/create', 'superadmin.tenant.create')->name('tenants.create');
+        Volt::route('tenants/{tenant}/edit', 'superadmin.tenant.edit')->name('tenants.edit');
 
 });
 

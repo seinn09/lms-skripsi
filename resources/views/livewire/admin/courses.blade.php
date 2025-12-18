@@ -5,6 +5,7 @@ use App\Models\Course;
 use App\Models\Faculty;
 use App\Models\Department;
 use App\Models\StudyProgram;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,22 +14,35 @@ new class extends Component
     public Collection $courses;
     public string $search = '';
 
+    public $selectedTenant = null;
     public $selectedFaculty = null;
     public $selectedDept = null;
     public $selectedProdi = null;
 
+    public Collection $tenants;
     public Collection $faculties;
     public Collection $departments;
     public Collection $studyPrograms;
 
+    public bool $isSuperAdmin = false;
     public ?int $idToDelete = null;
 
     public function mount(): void
     {
-        $this->faculties = Faculty::orderBy('name')->get();
+        $user = Auth::user();
+        $this->isSuperAdmin = $user->hasRole('superadministrator');
+
+        // Load tenants for superadmin
+        if ($this->isSuperAdmin) {
+            $this->tenants = Tenant::orderBy('name')->get();
+        } else {
+            $this->tenants = new Collection();
+        }
+
+        $this->faculties = new Collection();
         $this->departments = new Collection();
         $this->studyPrograms = new Collection();
-        
+
         $this->loadCourses();
     }
 
@@ -37,15 +51,45 @@ new class extends Component
         $this->loadCourses();
     }
 
+    public function updatedSelectedTenant($value)
+    {
+        if (empty($value)) {
+            $this->selectedTenant = null;
+            $this->faculties = new Collection();
+        } else {
+            $this->faculties = Faculty::where('tenant_id', $value)
+                ->orderBy('name')
+                ->get();
+        }
+
+        $this->departments = new Collection();
+        $this->studyPrograms = new Collection();
+        $this->selectedFaculty = null;
+        $this->selectedDept = null;
+        $this->selectedProdi = null;
+        $this->loadCourses();
+    }
+
     public function updatedSelectedFaculty($value)
     {
+        $user = Auth::user();
+
         if (empty($value)) {
             $this->selectedFaculty = null;
             $this->departments = new Collection();
         } else {
-            $this->departments = Department::where('faculty_id', $value)->orderBy('name')->get();
+            // Filter departments by faculty and tenant
+            $query = Department::where('faculty_id', $value);
+
+            if ($this->isSuperAdmin && !empty($this->selectedTenant)) {
+                $query->where('tenant_id', $this->selectedTenant);
+            } elseif (!$this->isSuperAdmin) {
+                $query->where('tenant_id', $user->tenant_id);
+            }
+
+            $this->departments = $query->orderBy('name')->get();
         }
-        
+
         $this->studyPrograms = new Collection();
         $this->selectedDept = null;
         $this->selectedProdi = null;
@@ -54,11 +98,22 @@ new class extends Component
 
     public function updatedSelectedDept($value)
     {
+        $user = Auth::user();
+
         if (empty($value)) {
             $this->selectedDept = null;
             $this->studyPrograms = new Collection();
         } else {
-            $this->studyPrograms = StudyProgram::where('department_id', $value)->orderBy('name')->get();
+            // Filter study programs by department and tenant
+            $query = StudyProgram::where('department_id', $value);
+
+            if ($this->isSuperAdmin && !empty($this->selectedTenant)) {
+                $query->where('tenant_id', $this->selectedTenant);
+            } elseif (!$this->isSuperAdmin) {
+                $query->where('tenant_id', $user->tenant_id);
+            }
+
+            $this->studyPrograms = $query->orderBy('name')->get();
         }
 
         $this->selectedProdi = null;
@@ -78,6 +133,13 @@ new class extends Component
         $user = Auth::user();
         $query = Course::with(['owner', 'studyProgram.department.faculty'])
                     ->search($this->search);
+
+        // Filter by tenant
+        if ($this->isSuperAdmin && !empty($this->selectedTenant)) {
+            $query->where('tenant_id', $this->selectedTenant);
+        } elseif (!$this->isSuperAdmin) {
+            $query->where('tenant_id', $user->tenant_id);
+        }
 
         if ($user->hasRole('staff_prodi') && $user->staffProdi) {
             $query->where('study_program_id', $user->staffProdi->study_program_id);
@@ -161,13 +223,28 @@ new class extends Component
 
                     @role('superadministrator|admin')
                     <div class="flex flex-col gap-4 mb-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {{-- Filter Tenant (Superadmin only) --}}
+                            @if($isSuperAdmin)
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Filter Kampus (Tenant)</span>
+                                </label>
+                                <select wire:model.live="selectedTenant" class="select select-bordered w-full">
+                                    <option value="">Semua Kampus</option>
+                                    @foreach($tenants as $tenant)
+                                        <option value="{{ $tenant->tenant_id }}">{{ $tenant->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
+
                             {{-- Filter Fakultas --}}
                             <div class="form-control w-full">
                                 <label class="label">
                                     <span class="label-text font-semibold">Filter Fakultas</span>
                                 </label>
-                                <select wire:model.live="selectedFaculty" class="select select-bordered w-full">
+                                <select wire:model.live="selectedFaculty" class="select select-bordered w-full" @if($faculties->isEmpty()) disabled @endif>
                                     <option value="">Semua Fakultas</option>
                                     @foreach($faculties as $faculty)
                                         <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
@@ -210,7 +287,7 @@ new class extends Component
                             <input type="text" wire:model.live="search" class="input w-full border-black rounded-xl" placeholder="Cari Kode MK, Nama, atau Dosen...">
 
                             @permission('courses-create')
-                                <a href="{{ route('admin.courses.create') }}" wire:navigate 
+                                <a href="{{ route('admin.courses.create') }}" wire:navigate
                                 class="btn btn-primary btn-sm text-white">
                                     + Tambah Course Baru
                                 </a>
@@ -222,9 +299,9 @@ new class extends Component
                         <table class="table">
                             <thead>
                                 <tr class="border bg-base-200 rounded-xl">
-                                    <th>Kode MK</th> 
+                                    <th>Kode MK</th>
                                     <th>Nama Mata Kuliah</th>
-                                    <th>Dosen Pengampu</th> 
+                                    <th>Dosen Pengampu</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -240,7 +317,7 @@ new class extends Component
                                         </td>
                                         <td class="flex gap-2">
                                             <div class="card-actions justify-end">
-                                                <a href="{{ route('courses.materials.index', $course) }}" wire:navigate 
+                                                <a href="{{ route('courses.materials.index', $course) }}" wire:navigate
                                                 class="py-2 px-4 text-base rounded-md text-black bg-blue-400
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-500">
                                                     Lihat Materi
@@ -260,9 +337,9 @@ new class extends Component
                                                 transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-green-500">>
                                                 Detail
                                             </a>
-                                            
+
                                             @role('superadministrator|admin')
-                                                <a href="{{ route('admin.courses.edit', $course) }}" wire:navigate 
+                                                <a href="{{ route('admin.courses.edit', $course) }}" wire:navigate
                                                     class="py-2 px-4 text-base rounded-md bg-yellow-500 text-black
                                                     transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-600">
                                                     Edit

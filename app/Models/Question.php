@@ -18,6 +18,7 @@ class Question extends Model
         'type', // multiple_choice, essay, true_false
         'question_text',
         'weight',
+        'tenant_id',
     ];
 
     public function course(): BelongsTo

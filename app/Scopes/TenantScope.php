@@ -17,7 +17,7 @@ class TenantScope implements Scope
     {
         if (session()->has('tenant_id')) {
             $builder->where($model->getTable() . '.tenant_id', session('tenant_id'));
-        } elseif (Auth::check() && Auth::user()->tenant_id) {
+        } elseif (! $model instanceof \App\Models\User && Auth::check() && Auth::user()->tenant_id) {
             $builder->where($model->getTable() . '.tenant_id', Auth::user()->tenant_id);
         }
     }

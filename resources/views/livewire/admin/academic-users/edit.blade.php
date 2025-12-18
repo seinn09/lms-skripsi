@@ -6,21 +6,21 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Pengajar;
 use App\Models\Siswa;
-use App\Models\Department;
 use App\Models\StudyProgram;
-use Illuminate\Database\Eloquent\Collection;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule as ValidationRule;
+use App\Traits\Livewire\WithTenantInput;
 
 new class extends Component
 {
+    use WithTenantInput;
+
     public User $user;
     public string $type = '';
 
-    // Data Master
-    public Collection $departments;
-    public Collection $studyPrograms;
+    public array $studyPrograms = [];
     public bool $isStaffProdi = false;
 
     #[Rule('required|string|min:3')]
@@ -38,7 +38,7 @@ new class extends Component
     public function mount(User $user): void
     {
         $this->user = $user;
-        
+
         if ($user->hasRole('pengajar')) {
             $this->type = 'dosen';
             $this->identity_number = $user->pengajar->nip ?? '';
@@ -47,12 +47,23 @@ new class extends Component
             $this->type = 'mahasiswa';
             $this->identity_number = $user->siswa->nim ?? '';
             $this->study_program_id = $user->siswa->study_program_id ?? null;
+        } elseif ($user->hasRole('staff_prodi')) {
+            $this->type = 'staff_prodi';
+            $this->identity_number = $user->staffProdi->nip ?? '';
+            $this->study_program_id = $user->staffProdi->study_program_id ?? null;
         } else {
-            abort(403, 'User ini bukan Dosen atau Mahasiswa');
+            abort(403, 'User ini bukan Dosen, Mahasiswa, atau Staff Prodi');
         }
 
         $this->name = $user->name;
         $this->email = $user->email;
+
+        $this->loadTenantData();
+        if (!$this->isSuperAdminForTenant) {
+             $this->tenant_id = $user->tenant_id;
+        } else {
+             $this->tenant_id = $user->tenant_id;
+        }
 
         $this->loadMasterData();
     }
@@ -63,16 +74,16 @@ new class extends Component
         $this->isStaffProdi = $currentUser->hasRole('staff_prodi');
 
         if ($this->isStaffProdi) {
-            $staffProdi = $currentUser->staffProdi; 
+            $staffProdi = $currentUser->staffProdi;
             if ($staffProdi) {
                 $myProdi = $staffProdi->studyProgram;
-                
+
                 $this->studyPrograms = new Collection([$myProdi]);
-                $this->departments = new Collection([$myProdi->department]);
             }
         } else {
-            $this->departments = Department::orderBy('name')->get();
-            $this->studyPrograms = StudyProgram::with('department')->orderBy('name')->get();
+
+            // $this->studyPrograms = StudyProgram::with('department')->orderBy('name')->get();
+            $this->studyPrograms = StudyProgram::with('department')->orderBy('name')->get()->all();
         }
     }
 
@@ -88,10 +99,21 @@ new class extends Component
             if (!empty($this->password)) {
                 $userData['password'] = Hash::make($this->password);
             }
+
+            $userData['tenant_id'] = $this->getValidTenantId();
+
             $this->user->update($userData);
 
             if ($this->type === 'dosen') {
                 $this->user->pengajar()->updateOrCreate(
+                    ['user_id' => $this->user->id],
+                    [
+                        'study_program_id' => $this->study_program_id,
+                        'nip' => $this->identity_number
+                    ]
+                );
+            } elseif ($this->type === 'staff_prodi') {
+                $this->user->staffProdi()->updateOrCreate(
                     ['user_id' => $this->user->id],
                     [
                         'study_program_id' => $this->study_program_id,
@@ -122,6 +144,7 @@ new class extends Component
                 'required', 'email',
                 ValidationRule::unique('users')->ignore($this->user->id),
             ],
+            'tenant_id' => $this->getTenantValidationRule(),
         ]);
 
         if ($this->type === 'dosen') {
@@ -130,6 +153,14 @@ new class extends Component
                 'identity_number' => [
                     'required',
                     ValidationRule::unique('pengajars', 'nip')->ignore($this->user->pengajar?->id),
+                ],
+            ]);
+        } elseif ($this->type === 'staff_prodi') {
+            $this->validate([
+                'study_program_id' => 'required|exists:study_programs,id',
+                'identity_number' => [
+                    'required',
+                    ValidationRule::unique('staff_prodis', 'nip')->ignore($this->user->staffProdi?->id),
                 ],
             ]);
         } else {
@@ -158,14 +189,16 @@ new class extends Component
                 <div class="p-6 text-gray-900">
 
                     <form wire:submit="save">
-                        
+
                         <fieldset class="fieldset bg-base-100 border-base-300 rounded-box w-full border p-4 mb-6">
                             <legend class="fieldset-legend text-lg font-semibold">Data Akun Login</legend>
+
+                            <x-input-tenant :tenants="$tenants_list" />
 
                             <label class="label" for="name">Nama Lengkap</label>
                             <input id="name" type="text" class="input w-full border-black rounded-xl m-1" wire:model="name" />
                             @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            
+
                             <label class="label mt-4" for="email">Email</label>
                             <input id="email" type="email" class="input w-full border-black rounded-xl m-1" wire:model="email" />
                             @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
@@ -173,14 +206,14 @@ new class extends Component
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                 <div>
                                     <label class="label" for="password">Password Baru (Opsional)</label>
-                                    <input id="password" type="password" class="input w-full border-black rounded-xl m-1" 
+                                    <input id="password" type="password" class="input w-full border-black rounded-xl m-1"
                                            placeholder="Biarkan kosong jika tidak diubah"
                                            wire:model="password" />
                                     @error('password') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="label" for="password_confirmation">Konfirmasi Password</label>
-                                    <input id="password_confirmation" type="password" class="input w-full border-black rounded-xl m-1" 
+                                    <input id="password_confirmation" type="password" class="input w-full border-black rounded-xl m-1"
                                            wire:model="password_confirmation" />
                                 </div>
                             </div>
@@ -192,16 +225,16 @@ new class extends Component
                             </legend>
 
                             <label class="label" for="identity_number">
-                                {{ $type === 'dosen' ? 'NIP' : 'NIM' }}
+                                {{ $type === 'dosen' || $type === 'staff_prodi' ? 'NIP' : 'NIM' }}
                             </label>
-                            <input id="identity_number" type="text" class="input w-full border-black rounded-xl m-1" 
+                            <input id="identity_number" type="text" class="input w-full border-black rounded-xl m-1"
                                    wire:model="identity_number" />
                             @error('identity_number') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                             @if($type === 'dosen')
                                 <label class="label mt-4" for="study_program_id">Program Studi</label>
-                                <select id="study_program_id" 
-                                        class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500" 
+                                <select id="study_program_id"
+                                        class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500"
                                         wire:model="study_program_id"
                                         @if($isStaffProdi) disabled @endif>
                                     <option value="">-- Pilih Program Studi --</option>
@@ -214,8 +247,22 @@ new class extends Component
 
                             @if($type === 'mahasiswa')
                                 <label class="label mt-4" for="study_program_id">Program Studi</label>
-                                <select id="study_program_id" 
-                                        class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500" 
+                                <select id="study_program_id"
+                                        class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500"
+                                        wire:model="study_program_id"
+                                        @if($isStaffProdi) disabled @endif>
+                                    <option value="">-- Pilih Program Studi --</option>
+                                    @foreach ($studyPrograms as $prodi)
+                                        <option value="{{ $prodi->id }}">{{ $prodi->name }} ({{ $prodi->degree }})</option>
+                                    @endforeach
+                                </select>
+                                @error('study_program_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @endif
+
+                            @if($type === 'staff_prodi')
+                                <label class="label mt-4" for="study_program_id">Program Studi</label>
+                                <select id="study_program_id"
+                                        class="select w-full border-black rounded-xl m-1 disabled:bg-gray-200 disabled:text-gray-500"
                                         wire:model="study_program_id"
                                         @if($isStaffProdi) disabled @endif>
                                     <option value="">-- Pilih Program Studi --</option>
@@ -227,13 +274,13 @@ new class extends Component
                             @endif
 
                         </fieldset>
-                        
+
                         <div class="mt-8 flex gap-3">
                             <button type="submit" class="btn bg-blue-500 px-4 font-bold
                                     text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500">
                                 Simpan Perubahan
                             </button>
-                            <a href="{{ route('admin.academic.users.index', ['tab' => $type]) }}" wire:navigate 
+                            <a href="{{ route('admin.academic.users.index', ['tab' => $type]) }}" wire:navigate
                                class="btn btn-ghost">
                                 Batal
                             </a>

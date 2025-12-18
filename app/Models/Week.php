@@ -20,6 +20,7 @@ class Week extends Model
         'week_number',
         'title',
         'description',
+        'tenant_id',
     ];
 
     public function course(): BelongsTo

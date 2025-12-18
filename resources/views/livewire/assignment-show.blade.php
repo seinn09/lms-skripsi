@@ -12,11 +12,9 @@ use Carbon\Carbon;
 new class extends Component
 {
     public Assignment $assignment;
-    
-    // Properti untuk Siswa
+
     public Collection $mySubmissions;
 
-    // Properti untuk Dosen
     public Collection $classes;
 
     public function mount(Assignment $assignment): void
@@ -24,9 +22,7 @@ new class extends Component
         $this->assignment = $assignment;
         $user = Auth::user();
 
-        // Authorization check for students
         if ($user->hasRole('siswa')) {
-            // Check if student is enrolled in any class of this course
             $course = $assignment->week->course;
             $isEnrolled = $user->enrolledClasses()
                 ->whereHas('course', function ($query) use ($course) {
@@ -51,7 +47,6 @@ new class extends Component
         }
     }
 
-    // Logic untuk Siswa (Sama seperti sebelumnya)
     public function loadStudentData(): void
     {
         $this->mySubmissions = $this->assignment->submissions()
@@ -59,21 +54,16 @@ new class extends Component
                                     ->get();
     }
 
-    // Logic untuk Dosen/Admin (BARU)
     public function loadTeacherData($user): void
     {
-        // 1. Ambil Course dari Assignment ini
         $course = $this->assignment->week->course;
 
-        // 2. Ambil Kelas-kelas yang terhubung
         if ($user->hasRole(['superadministrator', 'admin'])) {
-            // Admin lihat semua kelas
             $this->classes = $course->courseClasses()
-                                ->withCount('students') // Hitung total siswa
+                                ->withCount('students')
                                 ->orderBy('class_code', 'asc')
                                 ->get();
         } else {
-            // Pengajar hanya lihat kelas yang DIA ajar
             $this->classes = $course->courseClasses()
                                 ->where('user_id', $user->id)
                                 ->withCount('students')
@@ -81,7 +71,7 @@ new class extends Component
                                 ->get();
         }
     }
-    
+
     public function confirmRemove(): void
     {
         $this->js("
@@ -126,10 +116,10 @@ new class extends Component
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <div class="mb-8 border-b pb-6 flex justify-between items-start gap-4">
-    
+
                     <div class="flex-1">
                         <h1 class="text-3xl font-bold mb-2">{{ $assignment->title }}</h1>
-                        
+
                         <div class="prose max-w-none text-gray-600">
                             @if($assignment->description)
                                 <p>{{ $assignment->description }}</p>
@@ -139,8 +129,8 @@ new class extends Component
                         </div>
                     </div>
 
-                    <a href="{{ route('courses.materials.show', ['course' => $assignment->week->course, 'week' => $assignment->week]) }}" 
-                        wire:navigate 
+                    <a href="{{ route('courses.materials.show', ['course' => $assignment->week->course, 'week' => $assignment->week]) }}"
+                        wire:navigate
                         class="btn btn-ghost shrink-0">
                             &larr; Kembali
                     </a>
@@ -153,7 +143,7 @@ new class extends Component
                     <div class="overflow-hidden border border-gray-300 rounded-lg">
                         <table class="w-full text-sm text-left">
                             <tbody>
-                                
+
                                 <tr class="border-b border-gray-200">
                                     <th class="py-3 px-4 bg-gray-50 w-1/4 font-bold text-gray-700">Submission status</th>
                                     <td class="py-3 px-4 {{ $mySubmissions->isNotEmpty() ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500' }}">
@@ -193,7 +183,7 @@ new class extends Component
 
                                 <tr class="border-b border-gray-200">
                                     <th class="py-3 px-4 bg-gray-50 font-bold text-gray-700">Time remaining</th>
-                                    <td class="py-3 px-4 
+                                    <td class="py-3 px-4
                                         {{ ($assignment->deadline && now()->gt($assignment->deadline)) ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600' }}">
                                         @if ($assignment->deadline)
                                             @if ($mySubmissions->isNotEmpty())
@@ -232,15 +222,15 @@ new class extends Component
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                         </svg>
-                                                        
+
                                                         @if ($sub->file_path)
                                                             @php
                                                                 $fullName = basename($sub->file_path);
                                                                 $cleanName = \Illuminate\Support\Str::after($fullName, '_');
                                                             @endphp
 
-                                                            <a href="{{ Storage::url($sub->file_path) }}" 
-                                                            download="{{ $cleanName }}" 
+                                                            <a href="{{ Storage::url($sub->file_path) }}"
+                                                            download="{{ $cleanName }}"
                                                             class="text-blue-600 hover:underline">
                                                                 {{ $cleanName }}
                                                             </a>
@@ -293,13 +283,13 @@ new class extends Component
                                 text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-yellow-400">
                                 Edit submission
                             </a>
-                            
-                            <button wire:click="confirmRemove" class="btn px-3 bg-red-500 font-bold rounded-lg 
+
+                            <button wire:click="confirmRemove" class="btn px-3 bg-red-500 font-bold rounded-lg
                                 text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-red-600">
                                 Remove submission
                             </button>
                         @else
-                            <a href="{{ route('assignments.submission', $assignment) }}" wire:navigate class="btn btn-md bg-blue-500 font-bold rounded-lg 
+                            <a href="{{ route('assignments.submission', $assignment) }}" wire:navigate class="btn btn-md bg-blue-500 font-bold rounded-lg
                                 text-black transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-600">
                                 Add submission
                             </a>
@@ -330,7 +320,7 @@ new class extends Component
                     </div>
 
                     <h3 class="text-xl font-bold mb-4">Daftar Kelas (Grading)</h3>
-                    
+
                     <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100 p-4">
                         <table class="table">
                             <thead>
@@ -360,9 +350,9 @@ new class extends Component
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin.assignments.grading.class', ['assignment' => $assignment, 'class' => $class]) }}" 
+                                            <a href="{{ route('admin.assignments.grading.class', ['assignment' => $assignment, 'class' => $class]) }}"
                                                wire:navigate
-                                               class="btn btn-sm bg-blue-300 font-bold rounded-lg 
+                                               class="btn btn-sm bg-blue-300 font-bold rounded-lg
                                 text-white transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-400">
                                                 Lihat Submisi
                                             </a>

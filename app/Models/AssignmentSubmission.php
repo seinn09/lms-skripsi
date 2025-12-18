@@ -24,6 +24,7 @@ class AssignmentSubmission extends Model
         'grade',
         'comment_sub',
         'submitted_at',
+        'tenant_id',
     ];
 
     protected $casts = [
