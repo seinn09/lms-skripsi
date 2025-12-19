@@ -39,8 +39,9 @@ class Question extends Model
 
     public function scopeSearch($query, $term)
     {
+        $term = strtolower($term);
         $term = "%$term%";
-        $query->where('question_text', 'ilike', $term);
+        $query->whereRaw('LOWER(question_text) like ?', [$term]);
     }
 
     public function scopeType($query, $type)
