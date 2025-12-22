@@ -39,9 +39,9 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             OrganizationSeeder::class,
-            UserSeeder::class,
-            CourseSeeder::class,
-            ExamSeeder::class,
+            ProductionUserSeeder::class,
+            // CourseSeeder::class,
+            // ExamSeeder::class,
         ]);
 
         session()->forget('tenant_id');
